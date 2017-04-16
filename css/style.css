@@ -302,8 +302,7 @@ a.donate-link:hover {
   float: none;  
 }
 
-.border-white {
-  border: 1px solid #fff;
-  border-radius: 5px;
+.hex-1 {
+  background: url("/images/hex-1.png") center center;
 }
 
