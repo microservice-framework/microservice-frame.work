@@ -243,3 +243,12 @@ ul.download li .fa {
   border-radius: 3px;
   float: right;
 }
+
+a.donate-link {
+  color:#d11111;
+}
+a.donate-link:hover {
+  color:white;
+  background-color: #d11111;
+  border-color: #d11111;
+}
