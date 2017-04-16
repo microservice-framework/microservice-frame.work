@@ -7,9 +7,16 @@
 <title>Microservice Framework | Nodejs </title>
 <link type="text/css" rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css" media="all" />
 <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/font-awesome/4.5.0/css/font-awesome.min.css">
+ <link rel="stylesheet" href="//code.jquery.com/ui/1.10.2/themes/smoothness/jquery-ui.css">
 <link type="text/css" rel="stylesheet" href="/css/style.css" media="all" />
 <script type="text/javascript" src="//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
 <script type="text/javascript" src="//netdna.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
+<script src="//code.jquery.com/ui/1.10.2/jquery-ui.min.js"></script>
+<script>
+$( function() {
+  $( "#tabs" ).tabs();
+} );
+</script>
 </head>
 <body class="html front logged-in no-sidebars page-node navbar-is-fixed-top" >
   <header id="navbar" role="banner" class="navbar navbar-fixed-top navbar-default">
@@ -74,14 +81,36 @@
     <div class="row">
       <div id="about" class="col-xs-12">
         <div class="container">
-          <div class="icon col-xs-12 col-sm-4">
-              <i class="fa fa-users"></i>  
-          </div>
-          <div class="text col-xs-12 col-sm-8">
-            <p>Microservice Framework was started by <a href="https://github.com/Gormartsen" target="_blank"><i class="fa fa-user"></i> Gormartsen</a> in July 2016.<p>
-            <p>Microservice Framework is still in its infancy. If you wish to contribute, please feel free to join us.</p>
-            <p></p>
-            <p><center><a href="https://gitter.im/Microservice Framework/chat"  target="_blank" class="btn btn-outline-inverse btn-lg"><i class="fa fa-comments-o"></i> Join chat</a></center></p>
+          <div id="tabs">
+            <ul>
+              <li><a href="#tabs-1">Super minimal</a></li>
+              <li><a href="#tabs-2">Expected</a></li>
+              <li><a href="#tabs-3">Full scale</a></li>
+            </ul>
+            <div id="tabs-1">
+              <div class="icon col-xs-12 col-sm-4">
+                <i class="fa fa-download"></i>
+              </div>
+              <div class="text col-xs-12 col-sm-8">
+              <p>Proin elit arcu, rutrum commodo, vehicula tempus, commodo a, risus. Curabitur nec arcu. Donec sollicitudin mi sit amet mauris. Nam elementum quam ullamcorper ante. Etiam aliquet massa et lorem. Mauris dapibus lacus auctor risus. Aenean tempor ullamcorper leo. Vivamus sed magna quis ligula eleifend adipiscing. Duis orci. Aliquam sodales tortor vitae ipsum. Aliquam nulla. Duis aliquam molestie erat. Ut et mauris vel pede varius sollicitudin. Sed ut dolor nec orci tincidunt interdum. Phasellus ipsum. Nunc tristique tempus lectus.</p>
+              </div>
+            </div>
+            <div id="tabs-2">
+              <div class="icon col-xs-12 col-sm-4">
+                <i class="fa fa-download"></i>
+              </div>
+              <div class="text col-xs-12 col-sm-8">
+              <p>Proin elit arcu, rutrum commodo, vehicula tempus, commodo a, risus. Curabitur nec arcu. Donec sollicitudin mi sit amet mauris. Nam elementum quam ullamcorper ante. Etiam aliquet massa et lorem. Mauris dapibus lacus auctor risus. Aenean tempor ullamcorper leo. Vivamus sed magna quis ligula eleifend adipiscing. Duis orci. Aliquam sodales tortor vitae ipsum. Aliquam nulla. Duis aliquam molestie erat. Ut et mauris vel pede varius sollicitudin. Sed ut dolor nec orci tincidunt interdum. Phasellus ipsum. Nunc tristique tempus lectus.</p>
+              </div>
+            </div>
+            <div id="tabs-3">
+              <div class="icon col-xs-12 col-sm-4">
+                <i class="fa fa-download"></i>
+              </div>
+              <div class="text col-xs-12 col-sm-8">
+              <p>Proin elit arcu, rutrum commodo, vehicula tempus, commodo a, risus. Curabitur nec arcu. Donec sollicitudin mi sit amet mauris. Nam elementum quam ullamcorper ante. Etiam aliquet massa et lorem. Mauris dapibus lacus auctor risus. Aenean tempor ullamcorper leo. Vivamus sed magna quis ligula eleifend adipiscing. Duis orci. Aliquam sodales tortor vitae ipsum. Aliquam nulla. Duis aliquam molestie erat. Ut et mauris vel pede varius sollicitudin. Sed ut dolor nec orci tincidunt interdum. Phasellus ipsum. Nunc tristique tempus lectus.</p>
+              </div>
+            </div>
           </div>
         </div>
       </div>
