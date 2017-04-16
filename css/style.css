@@ -1,0 +1,245 @@
+iframe {
+  height: 90vh;
+  min-height: 90vh;
+}
+
+body {
+  padding-top: 50px;
+}
+
+.logo {
+    padding: 0px 15px;
+}
+
+.logo img {
+    height: 33px;
+}
+
+
+a {
+    color: #294172;
+}
+
+a:hover {
+    color: #1474a0;
+    text-decoration: none;
+}
+
+.navbar-default {
+    background-color: #294172;
+    border-color: #294172;
+}
+
+.navbar-default .navbar-brand {
+    color: #ffffff;
+}
+
+.navbar-default .navbar-brand:hover, .navbar-default .navbar-brand:focus {
+    color: #294172;
+    background-color: #ffffff;
+}
+
+.navbar-default .navbar-text {
+    color: #ffffff;
+}
+
+.navbar-default .navbar-nav > li > a {
+    color: #ffffff;
+}
+
+.navbar-default .navbar-nav > li > a:hover, .navbar-default .navbar-nav > li > a:focus {
+    color: #294172;
+    background-color: #ffffff;
+}
+
+.navbar-default .navbar-nav > li > .dropdown-menu {
+    background-color: #294172;
+}
+
+.navbar-default .navbar-nav > li > .dropdown-menu > li > a {
+    color: #ffffff;
+}
+
+.navbar-default .navbar-nav > li > .dropdown-menu > li > a:hover, .navbar-default .navbar-nav > li > .dropdown-menu > li > a:focus {
+    color: #294172;
+    background-color: #ffffff;
+}
+
+.navbar-default .navbar-nav > li > .dropdown-menu > li > .divider {
+    background-color: #294172;
+}
+
+.navbar-default .navbar-nav > .active > a, .navbar-default .navbar-nav > .active > a:hover,
+.navbar-default .navbar-nav > .active > a:focus {
+    color: #294172;
+    background-color: #ffffff;
+}
+
+.navbar-default .navbar-nav > .open > a, .navbar-default .navbar-nav > .open > a:hover,
+.navbar-default .navbar-nav > .open > a:focus {
+    color: #294172;
+    background-color: #ffffff;
+}
+
+.navbar-default .navbar-toggle {
+    border-color: #ffffff;
+}
+
+.navbar-default .navbar-toggle:hover, .navbar-default .navbar-toggle:focus {
+    color: #294172;
+    background-color: #294172;
+}
+
+.navbar-default .navbar-toggle .icon-bar {
+    background-color: #ffffff;
+}
+
+.navbar-default .navbar-collapse, .navbar-default .navbar-form {
+    border-color: #ffffff;
+}
+
+.navbar-default .navbar-link {
+    color: #ffffff;
+}
+
+.navbar-default .navbar-link:hover {
+    color: #294172;
+}
+
+.promo {
+  padding: 10px 10px 10px;
+  background-color: #222;
+  margin-left: -15px;
+  margin-right: -15px;
+  color: white;
+}
+
+.promo img {
+  padding: 10px;
+  width: 250px;
+}
+
+#about a{
+  color: white;
+  text-decoration: underline;
+}
+
+#about a.btn-outline-inverse {
+  color: #fff;
+  background-color: transparent;
+  border-color: white;
+  text-decoration: none;
+}
+
+#about a.btn-outline-inverse:hover, #about .btn-outline-inverse:focus {
+  background-color: #fff;
+  color: #5895ea;
+  text-decoration: none;
+}
+
+#about {
+  color: white;
+  background-color: #5895ea;
+}
+#about,
+#download {
+  padding: 20px;  
+}
+
+#download .icon,
+#about .icon
+{
+  text-align: center;
+}
+
+#about .icon.col-sm-4,
+#download .icon.col-sm-4 {
+  padding-top: 20px;
+}
+
+#about .icon .fa,
+#download .icon .fa{
+  font-size: 50px;
+  padding: 20px;
+}
+
+#about .icon .fa {
+  color: white;
+}
+
+#download a.btn-outline-inverse {
+  color: #5895ea;
+  background-color: transparent;
+  border-color: #5895ea;
+  text-decoration: none;
+}
+
+#download a.btn-outline-inverse:hover, #download .btn-outline-inverse:focus {
+  background-color: #5895ea;
+  color: #fff;
+  text-decoration: none;
+}
+
+
+ul.download {
+  padding-left: 0px;
+}
+
+ul.download li {
+  list-style: none;
+  padding-left: 0px;
+}
+
+ul.download li .fa {
+  color: orange;
+  padding-right: 5px;
+  margin-left: -20px;
+}
+
+.footer {
+  background-color: #333;
+  color: white;
+  text-align: center;
+  padding: 20px;
+}
+
+.footer ul {
+  padding-left: 0px;
+}
+
+.footer li {
+  list-style: none;
+  padding-left: 0px;
+}
+
+.footer a {
+  color: white;
+  text-decoration: underline;
+}
+
+.sha256 {
+  display: block;
+  color: #aaa;
+  padding: 2px;
+  font-size: smaller;
+  overflow-wrap: break-word;
+}
+
+.sha256:before {
+  content: 'sha256: ';
+  color: #5895ea;
+  font-size: smaller;
+  padding-left: 0px;
+}
+
+.size {
+  color: #fff;
+  font-size: 11px;
+  font-weight: bold;
+  display: inline-block;
+  padding: 2px 5px;
+  margin: 10px 2px 0px 10px;
+  background-color: orange;
+  border-radius: 3px;
+  float: right;
+}
