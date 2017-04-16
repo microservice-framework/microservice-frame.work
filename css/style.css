@@ -246,6 +246,7 @@ ul.download li .fa {
 
 a.donate-link {
   color:#d11111;
+  border: none;
 }
 a.donate-link:hover {
   color:white;
