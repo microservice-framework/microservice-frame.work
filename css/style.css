@@ -108,10 +108,10 @@ a:hover {
 
 .promo {
   padding: 10px 10px 10px;
-  background-color: #222;
+  background-color: #fff;
   margin-left: -15px;
   margin-right: -15px;
-  color: black;
+  color: #444;
 }
 
 .promo img {
