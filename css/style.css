@@ -136,6 +136,11 @@ a:hover {
   color: white;
   background-color: #5895ea;
 }
+
+#about .intro {
+  text-align: center;
+}
+
 #about,
 #download {
   padding: 20px;  
