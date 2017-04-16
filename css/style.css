@@ -119,11 +119,6 @@ a:hover {
   width: 250px;
 }
 
-#about a{
-  color: white;
-  text-decoration: underline;
-}
-
 #about a.btn-outline-inverse {
   color: #fff;
   background-color: transparent;
@@ -252,4 +247,30 @@ a.donate-link:hover {
   color:white;
   background-color: #d11111;
   border-color: #d11111;
+}
+
+/* About slider */
+
+.ui-widget-content {
+  color: white;
+  background: none;
+  border: none;
+}
+
+.ui-widget-header {
+  background: none;
+  border: none;
+}
+
+.ui-state-active,
+.ui-widget-content .ui-state-active,
+.ui-widget-header .ui-state-active {
+  border:none;
+  color: #42adf0;  
+}
+.ui-state-default,
+.ui-widget-content .ui-state-default,
+.ui-widget-header .ui-state-default {
+  color: #444;
+  border:none;
 }
