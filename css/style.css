@@ -310,10 +310,10 @@ a.donate-link:hover {
   border-radius: 5px;
 }
 
-#tabs text a {
+#tabs .text a {
   color: white;
 }
 
-#tabs text a:hover {
+#tabs .text a:hover {
   color: #42adf0;
 }
