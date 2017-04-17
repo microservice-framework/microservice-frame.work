@@ -257,6 +257,10 @@ a.donate-link:hover {
 }
 
 /* About slider */
+.ui-widget {
+  font: inherit;
+  font-size: inherit;
+}
 
 .ui-widget-content {
   color: white;
