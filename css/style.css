@@ -326,6 +326,6 @@ a.donate-link:hover {
   color: #444;
 }
 
-.ul.example li {
-  padding: 5px 0px 5px;
+ul.example li {
+  padding: 5px 0px 10px;
 }
