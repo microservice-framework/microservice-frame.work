@@ -309,7 +309,9 @@ a.donate-link:hover {
   border: 1px solid white;
   border-radius: 5px;
 }
-
+#tabs .text {
+  font-weight: 200;  
+}
 #tabs .text a {
   color: white;
 }
