@@ -134,7 +134,7 @@ a:hover {
 
 #about {
   color: white;
-  background-color: #5895ea;
+  background-color: #42adf0;
 }
 
 #about .intro {
@@ -310,6 +310,10 @@ a.donate-link:hover {
   border-radius: 5px;
 }
 
-#tabs a {
+#tabs text a {
   color: white;
+}
+
+#tabs text a:hover {
+  color: #42adf0;
 }
