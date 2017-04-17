@@ -320,6 +320,7 @@ a.donate-link:hover {
 }
 #tabs .text a {
   color: white;
+  font-weight: 400;
 }
 
 #tabs .text a:hover {
