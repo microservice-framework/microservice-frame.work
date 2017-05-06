@@ -84,13 +84,16 @@ MicroserviceClient.prototype._request = function(statusRequest, callback) {
   if (self.settings.headers) {
     headers = self.settings.headers;
     headers['Accept'] = 'application/json';
-    headers['User-Agent'] = 'MicroserviceClient.' + process.env.npm_package_version;
   } else {
     headers = {
-      Accept: 'application/json',
-      'User-Agent': 'MicroserviceClient.' + process.env.npm_package_version
-    };
+      Accept: 'application/json'
+    }
   }
+
+  // If we are running under node, set version User-agent.
+  if(process.env.npm_package_version) {
+    headers['User-Agent'] = 'MicroserviceClient.' + process.env.npm_package_version;
+  };
 
   if (self.settings.accessToken) {
     headers.access_token = self.settings.accessToken;
@@ -124,6 +127,8 @@ MicroserviceClient.prototype._request = function(statusRequest, callback) {
     type: 'json',
     contentType: 'application/json',
     processData: false,
+    crossOrigin: true,
+    withCredentials: true,
     data: JSON.stringify(requestData),
     error: function(err) {
       var err = new TypeError('Communication error');
