@@ -120,7 +120,7 @@ MicroserviceClient.prototype._request = function(statusRequest, callback) {
       }
     }
   }
-  request({
+  var requestQuery = {
     url: url,
     method: statusRequest.method,
     headers: headers,
@@ -128,7 +128,6 @@ MicroserviceClient.prototype._request = function(statusRequest, callback) {
     contentType: 'application/json',
     processData: false,
     crossOrigin: true,
-    data: JSON.stringify(requestData),
     error: function(err) {
       var err = new TypeError('Communication error');
       return callback(err, null);
@@ -137,7 +136,11 @@ MicroserviceClient.prototype._request = function(statusRequest, callback) {
       console.log(resp);
       return callback(null, resp);
     }
-  });
+  }
+  if(requestData){
+    requestQuery.data = JSON.stringify(requestData);
+  }
+  request(requestQuery);
 }
 
 /**
