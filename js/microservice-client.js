@@ -3,6 +3,7 @@ window.MicroserviceClient = require('./index.js');
 
 },{"./index.js":4}],2:[function(require,module,exports){
 module.exports = require('reqwest');
+
 },{"reqwest":11}],3:[function(require,module,exports){
 /**
  * Generate hash Signature for request
@@ -134,12 +135,12 @@ MicroserviceClient.prototype._request = function(statusRequest, callback) {
       return callback(err.response, null);
     },
     success: function(resp) {
-      console.log(resp);
       return callback(null, resp);
     }
   }
   if (requestData) {
     requestQuery.data = JSON.stringify(requestData);
+    requestQuery.dataOrigin = requestData;
   }
   request(requestQuery);
 }
