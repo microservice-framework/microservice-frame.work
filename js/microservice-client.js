@@ -129,7 +129,7 @@ MicroserviceClient.prototype._request = function(statusRequest, callback) {
     processData: false,
     crossOrigin: true,
     error: function(err) {
-      return callback(err, null);
+      return callback(err.response, null);
     },
     success: function(resp) {
       console.log(resp);
