@@ -129,7 +129,6 @@ MicroserviceClient.prototype._request = function(statusRequest, callback) {
     processData: false,
     crossOrigin: true,
     error: function(err) {
-      var err = new TypeError('Communication error');
       return callback(err, null);
     },
     success: function(resp) {
