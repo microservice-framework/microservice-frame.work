@@ -50,7 +50,7 @@ function MicroserviceWebSocket(settings) {
     var answer = false;
     try {
       answer = JSON.parse(event.data);
-      var eventName = '';
+      var eventName = 'unknown';
       switch (answer.method) {
         case 'POST': {
           eventName = 'create';
