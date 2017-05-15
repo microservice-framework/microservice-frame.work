@@ -1,7 +1,32 @@
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
+window.MicroserviceWebSocket = require('./includes/websocket.js');
+
+},{"./includes/websocket.js":6}],2:[function(require,module,exports){
 window.MicroserviceClient = require('./index.js');
 
-},{"./index.js":4}],2:[function(require,module,exports){
+},{"./index.js":7}],3:[function(require,module,exports){
+/**
+ * Generate hash Signature for request
+ */
+'use strict';
+
+var createHash = require('sha.js')
+
+/**
+ * Create unique hash for object.
+ *
+ * @param {object} obj - object to create sha.
+ *
+ * @returns {string} return signature string.
+ */
+module.exports = function hash(obj) {
+
+  return createHash('sha256')
+               .update(JSON.stringify(obj) + Date.now())
+               .digest('hex');
+};
+
+},{"sha.js":18}],4:[function(require,module,exports){
 const request = require('reqwest');
 
 function convertHeaders(headers) {
@@ -56,7 +81,7 @@ module.exports = function requestWrapper(options) {
   request(options);
 };
 
-},{"reqwest":11}],3:[function(require,module,exports){
+},{"reqwest":15}],5:[function(require,module,exports){
 /**
  * Generate hash Signature for request
  */
@@ -79,7 +104,294 @@ module.exports = function signature(protocol, data, secret) {
                .digest('hex');
 };
 
-},{"create-hmac":9}],4:[function(require,module,exports){
+},{"create-hmac":13}],6:[function(require,module,exports){
+/**
+ * WebSocket.
+ */
+'use strict';
+var Emitter = require('browser-emitter');
+var bind = function(fn, me) { return function() { return fn.apply(me, arguments); }; };
+const createHash = require('./hash.js');
+
+function MicroserviceWebSocket(settings) {
+  Emitter.call(this);
+  var self = this;
+  self.settings = settings;
+  var url = self.settings.URL;
+  if (self.settings.URL.slice(-1) == '/') {
+    url = url + self.settings.token;
+  } else {
+    url = self.settings.URL + '/' + self.settings.token;
+  }
+  self.cmdCallbacks = {}
+  self.websocket = new WebSocket(url);
+  self.websocket.onmessage = function(event) {
+    var answer = false;
+    try {
+      answer = JSON.parse(event.data);
+      if (answer.cmdHash) {
+        if (self.cmdCallbacks[answer.cmdHash]) {
+          if (answer.error) {
+            self.cmdCallbacks[answer.cmdHash](answer.error);
+          } else {
+            self.cmdCallbacks[answer.cmdHash](null, answer.message, answer.headers);
+          }
+          delete self.cmdCallbacks[answer.cmdHash];
+        }
+        return;
+      }
+      var eventName = 'unknown';
+      switch (answer.method) {
+        case 'ready': {
+          self.emit('ready', answer);
+          break;
+        }
+        case 'POST': {
+          eventName = 'create';
+          break;
+        }
+        case 'GET': {
+          eventName = 'read';
+          break;
+        }
+        case 'PUT': {
+          eventName = 'update';
+          break;
+        }
+        case 'DELETE': {
+          eventName = 'delete';
+          break;
+        }
+        case 'SEARCH': {
+          eventName = 'search';
+          break;
+        }
+      }
+      var eventDeatils = {
+        path: answer.path,
+        scope: answer.scope,
+        headers: answer.headers,
+      }
+      if (answer.loaders) {
+        for (var loader in answer.loaders) {
+          eventDeatils[loader] = answer.loaders[loader];
+        }
+      }
+      if (!answer.meta && answer.message) {
+        eventDeatils.message = answer.message;
+      }
+
+      // on('create|read|update|delete|search').
+      self.emit(eventName, eventDeatils);
+
+      // on('create|read|update|delete|search:scope').
+      self.emit(eventName + ':' + answer.scope, eventDeatils);
+      if (answer.loaders) {
+        for (var loader in answer.loaders) {
+          var loaderObject = answer.loaders[loader];
+          for (var key in loaderObject) {
+            var eventSubName = eventName + ':' + answer.scope + ':'
+            + loader + '.' + key + '=' + loaderObject[key];
+
+            // on('create|read|update|delete|search:scope:loader=value').
+            self.emit(eventSubName, eventDeatils);
+          }
+        }
+      }
+      eventDeatils.type = eventName;
+
+      // on('message').
+      self.emit('message', eventDeatils);
+    } catch(e) {
+      return self.emit('error', {
+        URL: self.settings.URL,
+        token: self.settings.token,
+        error: e
+      });
+    }
+  }
+  self.websocket.onopen = function(event) {
+    self.emit('open', {
+      URL: self.settings.URL,
+      token: self.settings.token
+    });
+  }
+  self.websocket.onclose = function(event) {
+    self.emit('close', {
+      URL: self.settings.URL,
+      token: self.settings.token,
+      code: event.code,
+      reason: event.reason
+    });
+  }
+  self.websocket.onerror = function(event) {
+    self.emit('error', {
+      URL: self.settings.URL,
+      token: self.settings.token
+    });
+  }
+  self.get = bind(self.get, self);
+  self.post = bind(self.post, self);
+  self.put = bind(self.put, self);
+  self.delete = bind(self.delete, self);
+  self.search = bind(self.search, self);
+  self._request = bind(self._request, self);
+}
+Emitter.inherits(MicroserviceWebSocket);
+
+/**
+ * Settings for microservice.
+ */
+MicroserviceWebSocket.prototype.settings = {};
+
+
+/**
+ * Preprocess request by signing in, setting headers and etc..
+ *
+ * @param {object} statusRequest
+ *  - method
+ *  - token
+ *  - Request
+ *  - RecordID
+ * @param {function} callback - return result to callback function
+ */
+MicroserviceWebSocket.prototype._request = function(statusRequest, callback) {
+  var self = this;
+  if (callback) {
+    statusRequest.cmdHash = createHash(statusRequest);
+    self.cmdCallbacks[statusRequest.cmdHash] = callback;
+  }
+  self.websocket.send(JSON.stringify(statusRequest));
+}
+
+/**
+ * Process GET (READ) request.
+ *
+ * @param {string} RecordID - sha256 for example.
+ * @param {string} token - optional, 24 length long string.
+ * @param {function} callback - return result to callback function
+ */
+MicroserviceWebSocket.prototype.get = function(EndPoint, RecordID, token, callback) {
+  var self = this;
+
+  var statusRequest = {
+    method: 'GET',
+    RecordID: RecordID,
+    EndPoint: EndPoint,
+  }
+
+  if (arguments.length === 2) {
+    callback = token;
+  } else {
+    statusRequest.RecordToken = token;
+  }
+
+  return self._request(statusRequest, callback);
+}
+
+/**
+ * Process DELETE request.
+ *
+ * @param {string} RecordID - sha256 for example.
+ * @param {string} token - optional, 24 length long string.
+ * @param {function} callback - return result to callback function
+ */
+MicroserviceWebSocket.prototype.delete = function(EndPoint, RecordID, token, callback) {
+  var self = this;
+  var statusRequest = {
+    method: 'DELETE',
+    RecordID: RecordID,
+    EndPoint: EndPoint,
+  }
+
+  if (arguments.length === 2) {
+    callback = token;
+  } else {
+    statusRequest.RecordToken = token;
+  }
+
+  return self._request(statusRequest, callback);
+}
+
+/**
+ * Process SEARCH (get list of documents based on search criteria) request.
+ *
+ * @param {object} data - values that need to be updated.
+ * @param {function} callback - return result to callback function
+ */
+MicroserviceWebSocket.prototype.search = function(EndPoint, data, callback) {
+  var self = this;
+  var statusRequest = {
+    method: 'SEARCH',
+    Request: data,
+    EndPoint: EndPoint,
+  }
+  return self._request(statusRequest, callback);
+}
+
+/**
+ * Process POST (CREATE) request.
+ *
+ * @param {object} data - object with document to create.
+ * @param {function} callback - return result to callback function
+ */
+MicroserviceWebSocket.prototype.post = function(EndPoint, data, callback) {
+  var self = this;
+  var statusRequest = {
+    method: 'POST',
+    Request: data,
+    EndPoint: EndPoint,
+  }
+  return self._request(statusRequest, callback);
+}
+
+/**
+ * Process OPTIONS (get data about supported methods and etc.) request.
+ *
+ * @param {object} data - ignored. For future use.
+ * @param {function} callback - return result to callback function
+ */
+MicroserviceWebSocket.prototype.options = function(EndPoint, data, callback) {
+  var self = this;
+  var statusRequest = {
+    method: 'OPTIONS',
+    Request: data,
+    EndPoint: EndPoint,
+  }
+  return self._request(statusRequest, callback);
+}
+
+/**
+ * Process PUT (UPDATE) request.
+ *
+ * @param {string} RecordID - sha256 for example.
+ * @param {string} token - optional, 24 length long string .
+ * @param {object} data - values that need to be updated.
+ * @param {function} callback - return result to callback function
+ */
+MicroserviceWebSocket.prototype.put = function(EndPoint, RecordID, token, data, callback) {
+  var self = this;
+  var statusRequest = {
+    method: 'PUT',
+    RecordID: RecordID,
+    EndPoint: EndPoint,
+  }
+
+  if (arguments.length === 3) {
+    callback = data;
+    data = token
+  } else {
+    statusRequest.RecordToken = token;
+  }
+  statusRequest.Request = data;
+
+  return self._request(statusRequest, callback);
+}
+
+
+module.exports = MicroserviceWebSocket;
+
+},{"./hash.js":3,"browser-emitter":8}],7:[function(require,module,exports){
 (function (process){
 /**
  * Send status.
@@ -318,7 +630,132 @@ MicroserviceClient.prototype.put = function(RecordID, token, data, callback) {
 module.exports = MicroserviceClient;
 
 }).call(this,require('_process'))
-},{"./includes/request.js":2,"./includes/signature.js":3,"_process":32}],5:[function(require,module,exports){
+},{"./includes/request.js":4,"./includes/signature.js":5,"_process":36}],8:[function(require,module,exports){
+/**
+ * [browser-emitter-js] Emitter.js
+ * Copyright (c) 2013 Yoshitaka Sakamoto <brilliantpenguin@gmail.com> 
+ * See license: https://github.com/ystskm/browser-emitter-js/blob/master/LICENSE
+ */
+(function(has_win, has_mod) {
+
+  var exports;
+  if(has_win) {
+    // browser, emulated window
+    exports = window;
+  } else {
+    // raw Node.js, web-worker
+    exports = typeof self == 'undefined' ? this: self;
+  }
+
+  has_mod && (module.exports = Emitter);
+  exports.Emitter = Emitter;
+
+  function Emitter() {
+    this._events = {};
+  }
+
+  var EmitterProps = {
+    inherits: inherits
+  };
+  for( var i in EmitterProps)
+    Emitter[i] = EmitterProps[i];
+
+  var EmitterProtos = {
+    on: on,
+    off: off,
+    once: once,
+    emit: emit,
+    listeners: listeners
+  };
+  for( var i in EmitterProtos)
+    Emitter.prototype[i] = _wrap(EmitterProtos[i]);
+
+  function on(type, args) {
+    this._events[type].push({
+      fn: args[0]
+    }); // TODO more options
+    return this;
+  }
+
+  function once(type, args) {
+    this._events[type].push({
+      fn: args[0],
+      once: true
+    }); // TODO more options
+    return this;
+  }
+
+  function off(type, args) {
+
+    var self = this, splice_pos = 0;
+    var evts = this._events;
+    if(type == null) {
+      for( var i in evts)
+        delete evts[i];
+      return this;
+    }
+
+    while(splice_pos < evts[type].length) {
+      var stat = evts[type][splice_pos];
+      typeof args[0] != 'function' || args[0] === stat.fn ? (function() {
+        evts[type].splice(splice_pos, 1);
+      })(): splice_pos++;
+    }
+
+    if(evts[type]) {
+      // occasionally already deleted (another .off() called)
+      evts[type].length == 0 && delete evts[type];
+    }
+    return this;
+
+  }
+
+  function emit(type, args) {
+
+    var emitter = this, splice_pos = 0;
+    var evts = emitter._events, handlers = [];
+
+    // emit event occasionally off all type of events
+    while(evts[type] && splice_pos < evts[type].length) {
+      var stat = evts[type][splice_pos];
+      handlers.push(stat.fn), stat.once ? (function() {
+        evts[type].splice(splice_pos, 1);
+      })(): splice_pos++;
+    }
+
+    if(evts[type]) {
+      // occasionally already deleted (.off() called)
+      evts[type].length || delete evts[type];
+    }
+
+    handlers.forEach(function(fn) {
+      fn.apply(emitter, args);
+    });
+
+    return emitter;
+
+  }
+
+  function listeners(type) {
+    return type == null ? this._events: this._events[type];
+  }
+
+  function inherits(Super) {
+    for( var i in Emitter.prototype)
+      Super.prototype[i] = Emitter.prototype[i];
+  }
+
+  function _wrap(fn) {
+    return function() {
+      var args = Array.prototype.slice.call(arguments), type = args.shift();
+      !Array.isArray(this._events[type]) && (this._events[type] = []);
+      return fn.call(this, type, args);
+    };
+  }
+
+}).call(this, typeof window != 'undefined', typeof module != 'undefined');
+
+},{}],9:[function(require,module,exports){
 (function (Buffer){
 var Transform = require('stream').Transform
 var inherits = require('inherits')
@@ -412,7 +849,7 @@ CipherBase.prototype._toString = function (value, enc, fin) {
 }
 
 }).call(this,require("buffer").Buffer)
-},{"buffer":24,"inherits":10,"stream":46,"string_decoder":47}],6:[function(require,module,exports){
+},{"buffer":28,"inherits":14,"stream":50,"string_decoder":51}],10:[function(require,module,exports){
 (function (Buffer){
 'use strict';
 var inherits = require('inherits')
@@ -468,7 +905,7 @@ module.exports = function createHash (alg) {
 }
 
 }).call(this,require("buffer").Buffer)
-},{"./md5":8,"buffer":24,"cipher-base":5,"inherits":10,"ripemd160":12,"sha.js":14}],7:[function(require,module,exports){
+},{"./md5":12,"buffer":28,"cipher-base":9,"inherits":14,"ripemd160":16,"sha.js":18}],11:[function(require,module,exports){
 (function (Buffer){
 'use strict';
 var intSize = 4;
@@ -505,7 +942,7 @@ function hash(buf, fn, hashSize, bigEndian) {
 }
 exports.hash = hash;
 }).call(this,require("buffer").Buffer)
-},{"buffer":24}],8:[function(require,module,exports){
+},{"buffer":28}],12:[function(require,module,exports){
 'use strict';
 /*
  * A JavaScript implementation of the RSA Data Security, Inc. MD5 Message
@@ -662,7 +1099,7 @@ function bit_rol(num, cnt)
 module.exports = function md5(buf) {
   return helpers.hash(buf, core_md5, 16);
 };
-},{"./helpers":7}],9:[function(require,module,exports){
+},{"./helpers":11}],13:[function(require,module,exports){
 (function (Buffer){
 'use strict';
 var createHash = require('create-hash/browser');
@@ -734,7 +1171,7 @@ module.exports = function createHmac(alg, key) {
 }
 
 }).call(this,require("buffer").Buffer)
-},{"buffer":24,"create-hash/browser":6,"inherits":10,"stream":46}],10:[function(require,module,exports){
+},{"buffer":28,"create-hash/browser":10,"inherits":14,"stream":50}],14:[function(require,module,exports){
 if (typeof Object.create === 'function') {
   // implementation from standard node.js 'util' module
   module.exports = function inherits(ctor, superCtor) {
@@ -759,7 +1196,7 @@ if (typeof Object.create === 'function') {
   }
 }
 
-},{}],11:[function(require,module,exports){
+},{}],15:[function(require,module,exports){
 /*!
   * Reqwest! A general purpose XHR connection manager
   * license MIT (c) Dustin Diaz 2015
@@ -1391,7 +1828,7 @@ if (typeof Object.create === 'function') {
   return reqwest
 });
 
-},{"xhr2":22}],12:[function(require,module,exports){
+},{"xhr2":26}],16:[function(require,module,exports){
 (function (Buffer){
 /*
 CryptoJS v3.1.2
@@ -1605,7 +2042,7 @@ function ripemd160 (message) {
 module.exports = ripemd160
 
 }).call(this,require("buffer").Buffer)
-},{"buffer":24}],13:[function(require,module,exports){
+},{"buffer":28}],17:[function(require,module,exports){
 (function (Buffer){
 // prototype class for hash functions
 function Hash (blockSize, finalSize) {
@@ -1678,7 +2115,7 @@ Hash.prototype._update = function () {
 module.exports = Hash
 
 }).call(this,require("buffer").Buffer)
-},{"buffer":24}],14:[function(require,module,exports){
+},{"buffer":28}],18:[function(require,module,exports){
 var exports = module.exports = function SHA (algorithm) {
   algorithm = algorithm.toLowerCase()
 
@@ -1695,7 +2132,7 @@ exports.sha256 = require('./sha256')
 exports.sha384 = require('./sha384')
 exports.sha512 = require('./sha512')
 
-},{"./sha":15,"./sha1":16,"./sha224":17,"./sha256":18,"./sha384":19,"./sha512":20}],15:[function(require,module,exports){
+},{"./sha":19,"./sha1":20,"./sha224":21,"./sha256":22,"./sha384":23,"./sha512":24}],19:[function(require,module,exports){
 (function (Buffer){
 /*
  * A JavaScript implementation of the Secure Hash Algorithm, SHA-0, as defined
@@ -1792,7 +2229,7 @@ Sha.prototype._hash = function () {
 module.exports = Sha
 
 }).call(this,require("buffer").Buffer)
-},{"./hash":13,"buffer":24,"inherits":10}],16:[function(require,module,exports){
+},{"./hash":17,"buffer":28,"inherits":14}],20:[function(require,module,exports){
 (function (Buffer){
 /*
  * A JavaScript implementation of the Secure Hash Algorithm, SHA-1, as defined
@@ -1894,7 +2331,7 @@ Sha1.prototype._hash = function () {
 module.exports = Sha1
 
 }).call(this,require("buffer").Buffer)
-},{"./hash":13,"buffer":24,"inherits":10}],17:[function(require,module,exports){
+},{"./hash":17,"buffer":28,"inherits":14}],21:[function(require,module,exports){
 (function (Buffer){
 /**
  * A JavaScript implementation of the Secure Hash Algorithm, SHA-256, as defined
@@ -1950,7 +2387,7 @@ Sha224.prototype._hash = function () {
 module.exports = Sha224
 
 }).call(this,require("buffer").Buffer)
-},{"./hash":13,"./sha256":18,"buffer":24,"inherits":10}],18:[function(require,module,exports){
+},{"./hash":17,"./sha256":22,"buffer":28,"inherits":14}],22:[function(require,module,exports){
 (function (Buffer){
 /**
  * A JavaScript implementation of the Secure Hash Algorithm, SHA-256, as defined
@@ -2088,7 +2525,7 @@ Sha256.prototype._hash = function () {
 module.exports = Sha256
 
 }).call(this,require("buffer").Buffer)
-},{"./hash":13,"buffer":24,"inherits":10}],19:[function(require,module,exports){
+},{"./hash":17,"buffer":28,"inherits":14}],23:[function(require,module,exports){
 (function (Buffer){
 var inherits = require('inherits')
 var SHA512 = require('./sha512')
@@ -2148,7 +2585,7 @@ Sha384.prototype._hash = function () {
 module.exports = Sha384
 
 }).call(this,require("buffer").Buffer)
-},{"./hash":13,"./sha512":20,"buffer":24,"inherits":10}],20:[function(require,module,exports){
+},{"./hash":17,"./sha512":24,"buffer":28,"inherits":14}],24:[function(require,module,exports){
 (function (Buffer){
 var inherits = require('inherits')
 var Hash = require('./hash')
@@ -2411,7 +2848,7 @@ Sha512.prototype._hash = function () {
 module.exports = Sha512
 
 }).call(this,require("buffer").Buffer)
-},{"./hash":13,"buffer":24,"inherits":10}],21:[function(require,module,exports){
+},{"./hash":17,"buffer":28,"inherits":14}],25:[function(require,module,exports){
 'use strict'
 
 exports.byteLength = byteLength
@@ -2527,9 +2964,9 @@ function fromByteArray (uint8) {
   return parts.join('')
 }
 
-},{}],22:[function(require,module,exports){
+},{}],26:[function(require,module,exports){
 
-},{}],23:[function(require,module,exports){
+},{}],27:[function(require,module,exports){
 (function (global){
 'use strict';
 
@@ -2641,7 +3078,7 @@ exports.allocUnsafeSlow = function allocUnsafeSlow(size) {
 }
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"buffer":24}],24:[function(require,module,exports){
+},{"buffer":28}],28:[function(require,module,exports){
 /*!
  * The buffer module from node.js, for the browser.
  *
@@ -4349,7 +4786,7 @@ function numberIsNaN (obj) {
   return obj !== obj // eslint-disable-line no-self-compare
 }
 
-},{"base64-js":21,"ieee754":27}],25:[function(require,module,exports){
+},{"base64-js":25,"ieee754":31}],29:[function(require,module,exports){
 (function (Buffer){
 // Copyright Joyent, Inc. and other Node contributors.
 //
@@ -4460,7 +4897,7 @@ function objectToString(o) {
 }
 
 }).call(this,{"isBuffer":require("../../is-buffer/index.js")})
-},{"../../is-buffer/index.js":29}],26:[function(require,module,exports){
+},{"../../is-buffer/index.js":33}],30:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -4764,7 +5201,7 @@ function isUndefined(arg) {
   return arg === void 0;
 }
 
-},{}],27:[function(require,module,exports){
+},{}],31:[function(require,module,exports){
 exports.read = function (buffer, offset, isLE, mLen, nBytes) {
   var e, m
   var eLen = nBytes * 8 - mLen - 1
@@ -4850,9 +5287,9 @@ exports.write = function (buffer, value, offset, isLE, mLen, nBytes) {
   buffer[offset + i - d] |= s * 128
 }
 
-},{}],28:[function(require,module,exports){
-arguments[4][10][0].apply(exports,arguments)
-},{"dup":10}],29:[function(require,module,exports){
+},{}],32:[function(require,module,exports){
+arguments[4][14][0].apply(exports,arguments)
+},{"dup":14}],33:[function(require,module,exports){
 /*!
  * Determine if an object is a Buffer
  *
@@ -4875,14 +5312,14 @@ function isSlowBuffer (obj) {
   return typeof obj.readFloatLE === 'function' && typeof obj.slice === 'function' && isBuffer(obj.slice(0, 0))
 }
 
-},{}],30:[function(require,module,exports){
+},{}],34:[function(require,module,exports){
 var toString = {}.toString;
 
 module.exports = Array.isArray || function (arr) {
   return toString.call(arr) == '[object Array]';
 };
 
-},{}],31:[function(require,module,exports){
+},{}],35:[function(require,module,exports){
 (function (process){
 'use strict';
 
@@ -4929,7 +5366,7 @@ function nextTick(fn, arg1, arg2, arg3) {
 }
 
 }).call(this,require('_process'))
-},{"_process":32}],32:[function(require,module,exports){
+},{"_process":36}],36:[function(require,module,exports){
 // shim for using process in browser
 var process = module.exports = {};
 
@@ -5115,10 +5552,10 @@ process.chdir = function (dir) {
 };
 process.umask = function() { return 0; };
 
-},{}],33:[function(require,module,exports){
+},{}],37:[function(require,module,exports){
 module.exports = require('./lib/_stream_duplex.js');
 
-},{"./lib/_stream_duplex.js":34}],34:[function(require,module,exports){
+},{"./lib/_stream_duplex.js":38}],38:[function(require,module,exports){
 // a duplex stream is just a stream that is both readable and writable.
 // Since JS doesn't have multiple prototypal inheritance, this class
 // prototypally inherits from Readable, and then parasitically from
@@ -5194,7 +5631,7 @@ function forEach(xs, f) {
     f(xs[i], i);
   }
 }
-},{"./_stream_readable":36,"./_stream_writable":38,"core-util-is":25,"inherits":28,"process-nextick-args":31}],35:[function(require,module,exports){
+},{"./_stream_readable":40,"./_stream_writable":42,"core-util-is":29,"inherits":32,"process-nextick-args":35}],39:[function(require,module,exports){
 // a passthrough stream.
 // basically just the most minimal sort of Transform stream.
 // Every written chunk gets output as-is.
@@ -5221,7 +5658,7 @@ function PassThrough(options) {
 PassThrough.prototype._transform = function (chunk, encoding, cb) {
   cb(null, chunk);
 };
-},{"./_stream_transform":37,"core-util-is":25,"inherits":28}],36:[function(require,module,exports){
+},{"./_stream_transform":41,"core-util-is":29,"inherits":32}],40:[function(require,module,exports){
 (function (process){
 'use strict';
 
@@ -6159,7 +6596,7 @@ function indexOf(xs, x) {
   return -1;
 }
 }).call(this,require('_process'))
-},{"./_stream_duplex":34,"./internal/streams/BufferList":39,"./internal/streams/stream":40,"_process":32,"buffer":24,"buffer-shims":23,"core-util-is":25,"events":26,"inherits":28,"isarray":30,"process-nextick-args":31,"string_decoder/":41,"util":22}],37:[function(require,module,exports){
+},{"./_stream_duplex":38,"./internal/streams/BufferList":43,"./internal/streams/stream":44,"_process":36,"buffer":28,"buffer-shims":27,"core-util-is":29,"events":30,"inherits":32,"isarray":34,"process-nextick-args":35,"string_decoder/":45,"util":26}],41:[function(require,module,exports){
 // a transform stream is a readable/writable stream where you do
 // something with the data.  Sometimes it's called a "filter",
 // but that's not a great name for it, since that implies a thing where
@@ -6342,7 +6779,7 @@ function done(stream, er, data) {
 
   return stream.push(null);
 }
-},{"./_stream_duplex":34,"core-util-is":25,"inherits":28}],38:[function(require,module,exports){
+},{"./_stream_duplex":38,"core-util-is":29,"inherits":32}],42:[function(require,module,exports){
 (function (process){
 // A bit simpler than readable streams.
 // Implement an async ._write(chunk, encoding, cb), and it'll handle all
@@ -6889,7 +7326,7 @@ function CorkedRequest(state) {
   };
 }
 }).call(this,require('_process'))
-},{"./_stream_duplex":34,"./internal/streams/stream":40,"_process":32,"buffer":24,"buffer-shims":23,"core-util-is":25,"inherits":28,"process-nextick-args":31,"util-deprecate":48}],39:[function(require,module,exports){
+},{"./_stream_duplex":38,"./internal/streams/stream":44,"_process":36,"buffer":28,"buffer-shims":27,"core-util-is":29,"inherits":32,"process-nextick-args":35,"util-deprecate":52}],43:[function(require,module,exports){
 'use strict';
 
 var Buffer = require('buffer').Buffer;
@@ -6954,10 +7391,10 @@ BufferList.prototype.concat = function (n) {
   }
   return ret;
 };
-},{"buffer":24,"buffer-shims":23}],40:[function(require,module,exports){
+},{"buffer":28,"buffer-shims":27}],44:[function(require,module,exports){
 module.exports = require('events').EventEmitter;
 
-},{"events":26}],41:[function(require,module,exports){
+},{"events":30}],45:[function(require,module,exports){
 'use strict';
 
 var Buffer = require('buffer').Buffer;
@@ -7231,10 +7668,10 @@ function simpleWrite(buf) {
 function simpleEnd(buf) {
   return buf && buf.length ? this.write(buf) : '';
 }
-},{"buffer":24,"buffer-shims":23}],42:[function(require,module,exports){
+},{"buffer":28,"buffer-shims":27}],46:[function(require,module,exports){
 module.exports = require('./readable').PassThrough
 
-},{"./readable":43}],43:[function(require,module,exports){
+},{"./readable":47}],47:[function(require,module,exports){
 exports = module.exports = require('./lib/_stream_readable.js');
 exports.Stream = exports;
 exports.Readable = exports;
@@ -7243,13 +7680,13 @@ exports.Duplex = require('./lib/_stream_duplex.js');
 exports.Transform = require('./lib/_stream_transform.js');
 exports.PassThrough = require('./lib/_stream_passthrough.js');
 
-},{"./lib/_stream_duplex.js":34,"./lib/_stream_passthrough.js":35,"./lib/_stream_readable.js":36,"./lib/_stream_transform.js":37,"./lib/_stream_writable.js":38}],44:[function(require,module,exports){
+},{"./lib/_stream_duplex.js":38,"./lib/_stream_passthrough.js":39,"./lib/_stream_readable.js":40,"./lib/_stream_transform.js":41,"./lib/_stream_writable.js":42}],48:[function(require,module,exports){
 module.exports = require('./readable').Transform
 
-},{"./readable":43}],45:[function(require,module,exports){
+},{"./readable":47}],49:[function(require,module,exports){
 module.exports = require('./lib/_stream_writable.js');
 
-},{"./lib/_stream_writable.js":38}],46:[function(require,module,exports){
+},{"./lib/_stream_writable.js":42}],50:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -7378,7 +7815,7 @@ Stream.prototype.pipe = function(dest, options) {
   return dest;
 };
 
-},{"events":26,"inherits":28,"readable-stream/duplex.js":33,"readable-stream/passthrough.js":42,"readable-stream/readable.js":43,"readable-stream/transform.js":44,"readable-stream/writable.js":45}],47:[function(require,module,exports){
+},{"events":30,"inherits":32,"readable-stream/duplex.js":37,"readable-stream/passthrough.js":46,"readable-stream/readable.js":47,"readable-stream/transform.js":48,"readable-stream/writable.js":49}],51:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -7601,7 +8038,7 @@ function base64DetectIncompleteChar(buffer) {
   this.charLength = this.charReceived ? 3 : 0;
 }
 
-},{"buffer":24}],48:[function(require,module,exports){
+},{"buffer":28}],52:[function(require,module,exports){
 (function (global){
 
 /**
@@ -7672,4 +8109,4 @@ function config (name) {
 }
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}]},{},[1]);
+},{}]},{},[1,2]);

@@ -19,7 +19,7 @@ var createHash = require('sha.js')
 module.exports = function hash(obj) {
 
   return createHash('sha256')
-               .update(JSON.stringify(data) + Date.now())
+               .update(JSON.stringify(obj) + Date.now())
                .digest('hex');
 };
 
@@ -48,8 +48,23 @@ function MicroserviceWebSocket(settings) {
     var answer = false;
     try {
       answer = JSON.parse(event.data);
+      if (answer.cmdHash) {
+        if (self.cmdCallbacks[answer.cmdHash]) {
+          if (answer.error) {
+            self.cmdCallbacks[answer.cmdHash](answer.error);
+          } else {
+            self.cmdCallbacks[answer.cmdHash](null, answer.message, answer.headers);
+          }
+          delete self.cmdCallbacks[answer.cmdHash];
+        }
+        return;
+      }
       var eventName = 'unknown';
       switch (answer.method) {
+        case 'ready': {
+          self.emit('ready', answer);
+          break;
+        }
         case 'POST': {
           eventName = 'create';
           break;
@@ -74,13 +89,14 @@ function MicroserviceWebSocket(settings) {
       var eventDeatils = {
         path: answer.path,
         scope: answer.scope,
+        headers: answer.headers,
       }
       if (answer.loaders) {
         for (var loader in answer.loaders) {
           eventDeatils[loader] = answer.loaders[loader];
         }
       }
-      if (!answer.meta) {
+      if (!answer.meta && answer.message) {
         eventDeatils.message = answer.message;
       }
 
@@ -91,20 +107,17 @@ function MicroserviceWebSocket(settings) {
       self.emit(eventName + ':' + answer.scope, eventDeatils);
       if (answer.loaders) {
         for (var loader in answer.loaders) {
-          var eventSubName = eventName + ':' + answer.scope + ':'
-            + loader + '=' + answer.loaders[loader];
+          var loaderObject = answer.loaders[loader];
+          for (var key in loaderObject) {
+            var eventSubName = eventName + ':' + answer.scope + ':'
+            + loader + '.' + key + '=' + loaderObject[key];
 
-          // on('create|read|update|delete|search:scope:loader=value').
-          self.emit(eventSubName, eventDeatils);
+            // on('create|read|update|delete|search:scope:loader=value').
+            self.emit(eventSubName, eventDeatils);
+          }
         }
       }
       eventDeatils.type = eventName;
-      if (answer.cmdHash) {
-        if (self.cmdCallbacks[answer.cmdHash]) {
-          self.cmdCallbacks[answer.cmdHash](eventDeatils);
-          delete self.cmdCallbacks[answer.cmdHash];
-        }
-      }
 
       // on('message').
       self.emit('message', eventDeatils);
@@ -183,14 +196,13 @@ MicroserviceWebSocket.prototype.get = function(EndPoint, RecordID, token, callba
   var statusRequest = {
     method: 'GET',
     RecordID: RecordID,
-    Request: null,
     EndPoint: EndPoint,
   }
 
   if (arguments.length === 2) {
     callback = token;
   } else {
-    statusRequest.token = token;
+    statusRequest.RecordToken = token;
   }
 
   return self._request(statusRequest, callback);
@@ -208,14 +220,13 @@ MicroserviceWebSocket.prototype.delete = function(EndPoint, RecordID, token, cal
   var statusRequest = {
     method: 'DELETE',
     RecordID: RecordID,
-    Request: null,
     EndPoint: EndPoint,
   }
 
   if (arguments.length === 2) {
     callback = token;
   } else {
-    statusRequest.token = token;
+    statusRequest.RecordToken = token;
   }
 
   return self._request(statusRequest, callback);
@@ -289,7 +300,7 @@ MicroserviceWebSocket.prototype.put = function(EndPoint, RecordID, token, data, 
     callback = data;
     data = token
   } else {
-    statusRequest.token = token;
+    statusRequest.RecordToken = token;
   }
   statusRequest.Request = data;
 
