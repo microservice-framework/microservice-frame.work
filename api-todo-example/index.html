@@ -90,12 +90,14 @@ Vue.component('todo', {
         self.cancelUpdate();
       });
     },
-    deleteSignature: function(){
+    deleteTodo: function(){
       var self = this;
-      self.submit = false;
-      app.apiClient.delete('todo/' + self.todo.id, function(err, response, headers){
-        debugLog('signatures:delete', err, response, headers);
-        self.submit = false;
+      self.isDelete=false;
+      app.apiClient.delete('todo/' + self.todo.id, self.todo.token, function(err, response, headers){
+        if(err) {
+          return app.message = 'failed to delete todo';
+        }
+        self.$emit('deleted');
       });
     },
     cancelUpdate: function() {
@@ -135,6 +137,9 @@ var app = new Vue({
     todoCreated: function(newTodo) {
       this.todos.unshift(newTodo);
       this.isnew = false;
+    },
+    removeTodo: function(index){
+      this.todos.splice(index, 1);
     }
   }
 })
@@ -175,7 +180,24 @@ span.tag {
 <script type="text/x-template" id="todo-template">
   <div class="todo">
     <div>
+      <div class="pull-right">
+        <button
+          v-on:click="isDelete=true"
+          class="btn btn-sm btn-link">
+          <i class="fa fa-times"></i>
+        </button>
+      </div>
+      <div v-if="isDelete">
+        Are you sure want to delete it?
+        <button
+          v-on:click="deleteTodo()"
+          class="btn btn-sm btn-danger">Yes</button>
+        <button
+          v-on:click="isDelete=false"
+          class="btn btn-sm btn-default">No</button>          
+      </div>
       <span>{{todo.title}}</span>
+
       <span class="tags">
         <span v-for="tag in todo.tags" class="tag">{{tag}}</span>
       </span>
@@ -293,9 +315,11 @@ HERE is some HOW-TO launch up this example
           </div>
             {{message}}
             <ul>
-              <li v-for="todo in todos" >
-                <todo :todo="todo"></todo>
-                {{todo}}
+              <li v-for="(todo, index) in todos" >
+                <todo
+                  :key="index"
+                  :todo="todo"
+                  v-on:deleted="removeTodo(index)"></todo>
               </li>
             </ul>
           </div>
