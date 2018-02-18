@@ -59,9 +59,9 @@ Vue.component('todo', {
       error: '',
       isEdit: false,
       isDelete: false,
-      submit: true,
-      newTodo: '',
+      isSubmit: false,
       update: {},
+      newtag: '',
     }
   },
   props: {
@@ -69,6 +69,12 @@ Vue.component('todo', {
   },
   created: function(){
     var self = this;
+    self.update = self.todo;
+  },
+  watch: {
+    todo: function(newValue){
+      this.update = newValue;
+    }
   },
   computed: {
     date: function() {
@@ -78,16 +84,16 @@ Vue.component('todo', {
     }
   },
   methods: {
-    updateSignature: function(){
-      debugLog('update signature', this.update);
+    updateTodo: function(){
       var self = this;
-      self.submit = false;
-      app.apiClient.put('todo/' + this.todo.id, this.todo.token, {
-        'signature': this.newBody,
-      }, function(err, response, headers){
-        debugLog('signatures:put', err, response, headers);
-        self.submit = true;
+      self.isSubmit = true;
+      app.apiClient.put('todo/' + this.todo.id, this.todo.token, this.update, function(err, response, headers){
+        if(err) {
+          return app.message = 'Failed to update todo';
+        }
+        self.isSubmit = false;
         self.cancelUpdate();
+        self.$emit('updated', response);
       });
     },
     deleteTodo: function(){
@@ -101,10 +107,20 @@ Vue.component('todo', {
       });
     },
     cancelUpdate: function() {
-      this.newBody = this.signature.signature;
+      this.update = this.todo;
       this.isEdit = false;
       this.isDelete = false;
-    }
+    },
+    addTag: function(){
+      this.update.tags.push(this.newtag);
+      this.newtag = '';
+    },
+    removeTag: function(tag) {
+      var index = this.update.tags.indexOf(tag);
+      if(index !== -1) {
+        this.update.tags.splice(index, 1);
+      }
+    },
   }
 });
 var app = new Vue({
@@ -140,6 +156,9 @@ var app = new Vue({
     },
     removeTodo: function(index){
       this.todos.splice(index, 1);
+    },
+    updateTodo: function(index, newValue){
+      this.todos.splice(index, 1, newValue);
     }
   }
 })
@@ -179,31 +198,80 @@ span.tag {
 </style>
 <script type="text/x-template" id="todo-template">
   <div class="todo">
-    <div>
-      <div class="pull-right">
-        <button
-          v-on:click="isDelete=true"
-          class="btn btn-sm btn-link">
-          <i class="fa fa-times"></i>
-        </button>
-      </div>
-      <div v-if="isDelete">
-        Are you sure want to delete it?
-        <button
-          v-on:click="deleteTodo()"
-          class="btn btn-sm btn-danger">Yes</button>
-        <button
-          v-on:click="isDelete=false"
-          class="btn btn-sm btn-default">No</button>          
-      </div>
-      <span>{{todo.title}}</span>
-
-      <span class="tags">
-        <span v-for="tag in todo.tags" class="tag">{{tag}}</span>
-      </span>
+    <div class="pull-right">
+      <button
+        v-on:click="isDelete=true"
+        class="btn btn-sm btn-link">
+        <i class="fa fa-times"></i>
+      </button>
+      <button
+        v-on:click="isEdit=true"
+        class="btn btn-sm btn-link">
+        <i class="fa fa-pencil"></i>
+      </button> 
     </div>
-    <div>{{todo.body}}</div>
-    <div>{{date}}</div>
+    <div v-if="isDelete">
+      Are you sure want to delete it?
+      <button
+        v-on:click="deleteTodo()"
+        class="btn btn-sm btn-danger">Yes</button>
+      <button
+        v-on:click="isDelete=false"
+        class="btn btn-sm btn-default">No</button>          
+    </div>
+    <div v-if="!isEdit">
+      <div>
+        <span>{{todo.title}}</span>
+        <span class="tags">
+          <span v-for="tag in todo.tags" class="tag">{{tag}}</span>
+        </span>
+      </div>
+      <div>{{todo.body}}</div>
+      <div>{{date}}</div>
+    </div>
+    <div v-if="isEdit">
+      <div class="form-group">
+        <input name="name"  v-model="update.title" class="form-control form-input required" placeholder="Todo title">
+      </div>
+      <div class="form-group">
+        <textarea v-model="update.body" class="form-control"  placeholder="Todo body"></textarea>
+      </div>
+      <div>
+        <div class="tags">
+          <span class="tag" v-for="tag in update.tags">
+            {{tag}}
+            <a 
+              v-on:click.prevent="removeTag(tag)"
+              href="#" class="remove">
+              <i class="fa fa-times"></i>
+            </a>
+          </span>
+        </div>
+        <div class="input-group" style="width: 200px;">
+          <input v-model="newtag" class="form-control" placeholder="tag name">
+          <span class="input-group-btn">
+            <button
+              class="btn-default btn"
+              :disabled="newtag == ''"
+              v-on:click="addTag()">Add Tag</button>
+          </span>
+        </div>
+      </div>
+      <div class="form-actions">
+        <div 
+          v-if="isSubmit">
+          <i class="fa fa-refresh fa-spin fa-fw"></i> Submitting ... 
+        </div>
+        <button
+          class="btn-success btn submit"
+          v-if="!isSubmit"
+          :disabled="update.title == ''"
+          v-on:click="updateTodo()">Update todo</button>
+        <button
+          class="btn-warning btn"
+          v-on:click="cancelUpdate()">Cancel</button>
+      </div>
+    </div>
   </div>
 </script>
 <script type="text/x-template" id="newtodo-template">
@@ -213,14 +281,14 @@ span.tag {
       <input name="name"  v-model="todo.title" class="form-control form-input required" placeholder="Todo title">
     </div>
     <div class="form-group">
-      <textarea v-bind="todo.body" class="form-control"  placeholder="Todo body"></textarea>
+      <textarea v-model="todo.body" class="form-control"  placeholder="Todo body"></textarea>
     </div>
     <div>
       <div class="tags">
         <span class="tag" v-for="tag in todo.tags">
           {{tag}}
           <a 
-            v-on:click="removeTag(tag)"
+            v-on:click.prevent="removeTag(tag)"
             href="#" class="remove">
             <i class="fa fa-times"></i>
           </a>
@@ -314,14 +382,12 @@ HERE is some HOW-TO launch up this example
             </div>
           </div>
             {{message}}
-            <ul>
-              <li v-for="(todo, index) in todos" >
-                <todo
-                  :key="index"
-                  :todo="todo"
-                  v-on:deleted="removeTodo(index)"></todo>
-              </li>
-            </ul>
+            <todo
+               v-for="(todo, index) in todos"
+              :key="index"
+              :todo="todo"
+              v-on:updated="updateTodo(index, $event)"
+              v-on:deleted="removeTodo(index)"></todo>
           </div>
 
         </div>
