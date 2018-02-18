@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="ru" version="XHTML+RDFa 1.0" dir="ltr">
+<head profile="http://www.w3.org/1999/xhtml/vocab">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1.0, user-scalable=no" />
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<title>Microservice Framework</title>
+<link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" media="all" />
+<link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" media="all" />
+<link type="text/css" rel="stylesheet" href="/css/style.css" media="all" />
+<script src="//code.jquery.com/jquery-3.2.1.slim.min.js"></script>
+<script type="text/javascript" src="//netdna.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
+<script src="../js/microservice-client.min.js"></script>
+<script src="//cdn.jsdelivr.net/npm/vue"></script>
+<script>
+$( function() {
+Vue.component('newtodo', {
+  template: '#newtodo-template',
+  data: function(){
+    return {
+      todo: {
+        title: '',
+        body: '',
+        tags: [],
+      },
+      newtag: '',
+      isSubmit: false,
+    }
+  },
+  methods: {
+    addTag: function(){
+      this.todo.tags.push(this.newtag);
+      this.newtag = '';
+    },
+    removeTag: function(tag) {
+      var index = this.todo.tags.indexOf(tag);
+      if(index !== -1) {
+        this.todo.tags.splice(index, 1);
+      }
+    }
+  }
+});
+Vue.component('todo', {
+  template: '#todo-template',
+  data: function(){
+    return {
+      error: '',
+      isEdit: false,
+      isDelete: false,
+      submit: true,
+      newTodo: '',
+      update: {},
+    }
+  },
+  props: {
+    todo: Object
+  },
+  created: function(){
+    var self = this;
+  },
+  computed: {
+    date: function() {
+      var dt = new Date(this.todo.changed);
+      return dt.getFullYear() + '-' + dt.getMonth() + '-' + dt.getDate()
+      + ' ' + dt.getHours() + ':' + dt.getMinutes();
+    }
+  },
+  methods: {
+    updateSignature: function(){
+      debugLog('update signature', this.update);
+      var self = this;
+      self.submit = false;
+      app.apiClient.put('todo/' + this.todo.id, this.todo.token, {
+        'signature': this.newBody,
+      }, function(err, response, headers){
+        debugLog('signatures:put', err, response, headers);
+        self.submit = true;
+        self.cancelUpdate();
+      });
+    },
+    deleteSignature: function(){
+      var self = this;
+      self.submit = false;
+      app.apiClient.delete('todo/' + self.todo.id, function(err, response, headers){
+        debugLog('signatures:delete', err, response, headers);
+        self.submit = false;
+      });
+    },
+    cancelUpdate: function() {
+      this.newBody = this.signature.signature;
+      this.isEdit = false;
+      this.isDelete = false;
+    }
+  }
+});
+var app = new Vue({
+  el: '#example-todo',
+  data: {
+    message: 'initiating',
+    apiClient: false,
+    todos: [],
+    isnew: false,
+  },
+  created: function(){
+    var self = this;
+    var clientSettings = {
+      URL: "http://localhost:3100",
+      secureKey: '524b8c2be918d408d8d9c89a6d5ce7e85e25e0efa412d8aa'
+    }
+    self.apiClient = new MicroserviceClient(clientSettings);
+    self.apiClient.search('todo', {query:{},limit: 10}, function(err, handlerResponse, headers){
+      if(err) {
+        self.message = err;
+        return;
+      }
+      for (var todo of handlerResponse) {
+        self.todos.push(todo);
+      }
+      self.message = 'connected';
+    });
+  },
+  methods: {
+    createdTime: function(time) {
+      return new Date(time);
+    }
+  }
+})
+
+} );
+</script>
+<style>
+.remove {
+  color:red;
+}
+.labels .label {
+  margin-left: 15px;
+}
+#example-todo ul {
+  padding: 0px;
+  margin: 0px;
+}
+#example-todo ul li {
+  list-style: none;
+}
+.todo {
+  border-bottom: 1px dashed #ddd;
+}
+span.tag {
+  background-color: orange;
+  border-radius: 2px;
+  color: white;
+  padding: 2px 10px;
+  margin-left: 5px;
+}
+.new-todo {
+  padding: 10px 50px;
+}
+.form-actions {
+  padding-top: 10px;
+}
+</style>
+<script type="text/x-template" id="todo-template">
+  <div class="todo">
+    <div>
+      <span>{{todo.title}}</span>
+      <span class="tags">
+        <span v-for="tag in todo.tags" class="tag">{{tag}}</span>
+      </span>
+    </div>
+    <div>{{todo.body}}</div>
+    <div>{{date}}</div>
+  </div>
+</script>
+<script type="text/x-template" id="newtodo-template">
+  <div>
+    <h2>Creating new todo</h2>
+    <div class="form-group">
+      <input name="name"  v-model="todo.title" class="form-control form-input required" placeholder="Todo title">
+    </div>
+    <div class="form-group">
+      <textarea v-bind="todo.body" class="form-control"  placeholder="Todo body"></textarea>
+    </div>
+    <div>
+      <div class="tags">
+        <span class="tag" v-for="tag in todo.tags">
+          {{tag}}
+          <a 
+            v-on:click="removeTag(tag)"
+            href="#" class="remove">
+            <i class="fa fa-times"></i>
+          </a>
+        </span>
+      </div>
+      <div class="input-group" style="width: 200px;">
+        <input v-model="newtag" class="form-control" placeholder="tag name">
+        <span class="input-group-btn">
+          <button
+            class="btn-default btn"
+            :disabled="newtag == ''"
+            v-on:click="addTag()">Add Tag</button>
+        </span>
+      </div>
+    </div>
+    <div class="form-actions">
+      <div 
+        v-if="isSubmit">
+        <i class="fa fa-refresh fa-spin fa-fw"></i> Submitting ... 
+      </div>
+      <button
+        class="btn-success btn submit"
+        v-if="!isSubmit"
+        :disabled="todo.title == ''"
+        v-on:click="createTodo()">Create todo</button>
+    </div>
+  </div>
+</script>
+</head>
+<body class="html front logged-in no-sidebars page-node navbar-is-fixed-top" >
+  <header id="navbar" role="banner" class="navbar navbar-fixed-top navbar-default">
+    <div class="container">
+      <div class="navbar-header">
+        <a class="logo navbar-btn pull-left" href="/" title="Main page">
+          <img src="../images/hex.png" alt="Main page" />
+        </a>
+        
+        <a class="name navbar-brand" href="../" title="Main page">Microservice Framework</a>
+        
+        <!-- .btn-navbar is used as the toggle for collapsed navbar content -->
+        <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+          <span class="sr-only">Toggle navigation</span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+        </button>
+      </div>
+  
+      <div class="navbar-collapse collapse">
+        <nav role="navigation">
+          <ul class="menu nav navbar-nav navbar-right">
+            <li class="first leaf"><a href="../#about" title="About">About</a></li>
+            <li class="leaf"><a href="https://github.com/microservice-framework" title="GitHub" target="_blank">GitHub</a></li>
+            <li class="leaf"><a href="https://www.npmjs.com/~microservice-framework" title="NpmJS" target="_blank">NpmJS</a></li>
+            <li class="leaf"><a href="https://gitter.im/microservice-framework/chat" title="Contact" target="_blank">Gitter</a></li>
+            
+          </ul>
+        </nav>
+      </div>
+    </div>
+  </header>
+
+  <div class="main-container container-fluid">
+    <div class="row">
+      <div id="about" class="col-xs-12">
+        <div class="container">
+          <div class="intro">
+            <h2># API TODO Example</h2>
+            <p>
+HERE is some HOW-TO launch up this example
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="row">
+      <div id="app-container" class="col-xs-12">
+        <div class="container">
+          <div id="example-todo">
+          <div>
+            <button
+              v-if="!isnew"
+              v-on:click="isnew=true"
+              class="btn btn-link">
+              <i class="fa fa-plus-circle"></i> Add New Todo
+            </button>
+            <div v-if="isnew" is="newtodo" class="new-todo">
+            </div>
+          </div>
+            {{message}}
+            <ul>
+              <li v-for="todo in todos" >
+                <todo :todo="todo"></todo>
+                {{todo}}
+              </li>
+            </ul>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+  <footer class="footer container-fluid">
+    <div class="region region-footer">
+      <div class="content">
+        <ul>
+          <li> Microservice Framework is released under <a href="http://creativecommons.org/licenses/GPL/3.0/" target="_blank" >GNU General Public License, version 3.</a></li>
+        </ul>
+        <div class="logo">
+          <img src="/images/hex-white.png" />
+        </div>
+      </div>
+    </div>
+  </footer>
+</body>
+</html>
+
