@@ -37,6 +37,18 @@ Vue.component('newtodo', {
       if(index !== -1) {
         this.todo.tags.splice(index, 1);
       }
+    },
+    createTodo: function(){
+      var self = this;
+      app.apiClient.post('todo', this.todo, function(err, response, headers){
+        if(err) {
+          return app.message = 'Failed to create new todo';
+        }
+        self.todo.title = '';
+        self.todo.body = '';
+        self.todo.tags.splice(0, self.todo.tags.length);
+        self.$emit('newtodo', response);
+      });
     }
   }
 });
@@ -120,8 +132,9 @@ var app = new Vue({
     });
   },
   methods: {
-    createdTime: function(time) {
-      return new Date(time);
+    todoCreated: function(newTodo) {
+      this.todos.unshift(newTodo);
+      this.isnew = false;
     }
   }
 })
@@ -272,7 +285,10 @@ HERE is some HOW-TO launch up this example
               class="btn btn-link">
               <i class="fa fa-plus-circle"></i> Add New Todo
             </button>
-            <div v-if="isnew" is="newtodo" class="new-todo">
+            <div v-if="isnew"
+              is="newtodo"
+              class="new-todo"
+              v-on:newtodo="todoCreated">
             </div>
           </div>
             {{message}}
