@@ -1,0 +1,51 @@
+.toolbar {
+  padding: 5px 0px;
+  border-bottom: 1px solid #ddd;
+  margin-bottom: 15px;
+}
+
+#example-todo ul {
+  padding: 0px;
+  margin: 0px;
+}
+#example-todo ul li {
+  list-style: none;
+}
+.todo {
+  border-bottom: 1px dashed #ddd;
+  margin-bottom: 10px;
+  padding-bottom: 10px;
+}
+.todo .action .btn-link{
+  color: #ddd;
+}
+.todo:hover .action .delete {
+  color: red;
+}
+.todo:hover .action .edit {
+  color: orange;
+}
+
+.todo .tags {
+  padding-bottom: 10px;
+}
+.todo .date {
+  padding-top: 5px;
+  font-size: small;
+  color: #aaa;
+}
+
+span.tag {
+  background-color: orange;
+  border-radius: 2px;
+  color: white;
+  padding: 2px 10px;
+  margin-left: 5px;
+font-size: smaller;
+}
+.new-todo {
+  padding: 10px 50px;
+}
+.form-actions {
+  padding-top: 10px;
+}

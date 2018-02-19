@@ -8,205 +8,23 @@
 <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" media="all" />
 <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" media="all" />
 <link type="text/css" rel="stylesheet" href="/css/style.css" media="all" />
+<link type="text/css" rel="stylesheet" href="app.css" media="all" />
 <script src="//code.jquery.com/jquery-3.2.1.slim.min.js"></script>
 <script type="text/javascript" src="//netdna.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
 <script src="../js/microservice-client.min.js"></script>
 <script src="//cdn.jsdelivr.net/npm/vue"></script>
-<script>
-$( function() {
-Vue.component('newtodo', {
-  template: '#newtodo-template',
-  data: function(){
-    return {
-      todo: {
-        title: '',
-        body: '',
-        tags: [],
-      },
-      newtag: '',
-      isSubmit: false,
-    }
-  },
-  methods: {
-    addTag: function(){
-      this.todo.tags.push(this.newtag);
-      this.newtag = '';
-    },
-    removeTag: function(tag) {
-      var index = this.todo.tags.indexOf(tag);
-      if(index !== -1) {
-        this.todo.tags.splice(index, 1);
-      }
-    },
-    createTodo: function(){
-      var self = this;
-      app.apiClient.post('todo', this.todo, function(err, response, headers){
-        if(err) {
-          return app.message = 'Failed to create new todo';
-        }
-        self.todo.title = '';
-        self.todo.body = '';
-        self.todo.tags.splice(0, self.todo.tags.length);
-        self.$emit('newtodo', response);
-      });
-    }
-  }
-});
-Vue.component('todo', {
-  template: '#todo-template',
-  data: function(){
-    return {
-      error: '',
-      isEdit: false,
-      isDelete: false,
-      isSubmit: false,
-      update: {},
-      newtag: '',
-    }
-  },
-  props: {
-    todo: Object
-  },
-  created: function(){
-    var self = this;
-    self.update = self.todo;
-  },
-  watch: {
-    todo: function(newValue){
-      this.update = newValue;
-    }
-  },
-  computed: {
-    date: function() {
-      var dt = new Date(this.todo.changed);
-      return dt.getFullYear() + '-' + dt.getMonth() + '-' + dt.getDate()
-      + ' ' + dt.getHours() + ':' + dt.getMinutes();
-    }
-  },
-  methods: {
-    updateTodo: function(){
-      var self = this;
-      self.isSubmit = true;
-      app.apiClient.put('todo/' + this.todo.id, this.todo.token, this.update, function(err, response, headers){
-        if(err) {
-          return app.message = 'Failed to update todo';
-        }
-        self.isSubmit = false;
-        self.cancelUpdate();
-        self.$emit('updated', response);
-      });
-    },
-    deleteTodo: function(){
-      var self = this;
-      self.isDelete=false;
-      app.apiClient.delete('todo/' + self.todo.id, self.todo.token, function(err, response, headers){
-        if(err) {
-          return app.message = 'failed to delete todo';
-        }
-        self.$emit('deleted');
-      });
-    },
-    cancelUpdate: function() {
-      this.update = this.todo;
-      this.isEdit = false;
-      this.isDelete = false;
-    },
-    addTag: function(){
-      this.update.tags.push(this.newtag);
-      this.newtag = '';
-    },
-    removeTag: function(tag) {
-      var index = this.update.tags.indexOf(tag);
-      if(index !== -1) {
-        this.update.tags.splice(index, 1);
-      }
-    },
-  }
-});
-var app = new Vue({
-  el: '#example-todo',
-  data: {
-    message: 'initiating',
-    apiClient: false,
-    todos: [],
-    isnew: false,
-  },
-  created: function(){
-    var self = this;
-    var clientSettings = {
-      URL: "http://localhost:3100",
-      secureKey: '524b8c2be918d408d8d9c89a6d5ce7e85e25e0efa412d8aa'
-    }
-    self.apiClient = new MicroserviceClient(clientSettings);
-    self.apiClient.search('todo', {query:{},limit: 10}, function(err, handlerResponse, headers){
-      if(err) {
-        self.message = err;
-        return;
-      }
-      for (var todo of handlerResponse) {
-        self.todos.push(todo);
-      }
-      self.message = 'connected';
-    });
-  },
-  methods: {
-    todoCreated: function(newTodo) {
-      this.todos.unshift(newTodo);
-      this.isnew = false;
-    },
-    removeTodo: function(index){
-      this.todos.splice(index, 1);
-    },
-    updateTodo: function(index, newValue){
-      this.todos.splice(index, 1, newValue);
-    }
-  }
-})
-
-} );
-</script>
-<style>
-.remove {
-  color:red;
-}
-.labels .label {
-  margin-left: 15px;
-}
-#example-todo ul {
-  padding: 0px;
-  margin: 0px;
-}
-#example-todo ul li {
-  list-style: none;
-}
-.todo {
-  border-bottom: 1px dashed #ddd;
-}
-span.tag {
-  background-color: orange;
-  border-radius: 2px;
-  color: white;
-  padding: 2px 10px;
-  margin-left: 5px;
-}
-.new-todo {
-  padding: 10px 50px;
-}
-.form-actions {
-  padding-top: 10px;
-}
-</style>
+<script src="app.js"></script>
 <script type="text/x-template" id="todo-template">
   <div class="todo">
-    <div class="pull-right">
+    <div class="action pull-right">
       <button
         v-on:click="isDelete=true"
-        class="btn btn-sm btn-link">
+        class="btn btn-sm btn-link delete ">
         <i class="fa fa-times"></i>
       </button>
       <button
         v-on:click="isEdit=true"
-        class="btn btn-sm btn-link">
+        class="btn btn-sm btn-link edit">
         <i class="fa fa-pencil"></i>
       </button> 
     </div>
@@ -227,7 +45,7 @@ span.tag {
         </span>
       </div>
       <div>{{todo.body}}</div>
-      <div>{{date}}</div>
+      <div class="date"><i class="fa fa-calendar-o" aria-hidden="true"></i> {{date}}</div>
     </div>
     <div v-if="isEdit">
       <div class="form-group">
@@ -266,7 +84,7 @@ span.tag {
           class="btn-success btn submit"
           v-if="!isSubmit"
           :disabled="update.title == ''"
-          v-on:click="updateTodo()">Update todo</button>
+          v-on:click="updateTodo()">Update</button>
         <button
           class="btn-warning btn"
           v-on:click="cancelUpdate()">Cancel</button>
@@ -313,7 +131,11 @@ span.tag {
         class="btn-success btn submit"
         v-if="!isSubmit"
         :disabled="todo.title == ''"
-        v-on:click="createTodo()">Create todo</button>
+        v-on:click="createTodo()">Create</button>
+      <button
+        class="btn-default btn"
+        v-if="!isSubmit"
+        v-on:click="$emit('cancel')">Cancel</button>
     </div>
   </div>
 </script>
@@ -368,28 +190,37 @@ HERE is some HOW-TO launch up this example
       <div id="app-container" class="col-xs-12">
         <div class="container">
           <div id="example-todo">
-          <div>
-            <button
-              v-if="!isnew"
-              v-on:click="isnew=true"
-              class="btn btn-link">
-              <i class="fa fa-plus-circle"></i> Add New Todo
-            </button>
+            <div>Status: {{message}}</div>
+            <div class="toolbar">
+              <div class="pull-right">
+              <button
+                v-on:click="sort = !sort"
+                class="btn btn-default btn-sm">
+                Sort: 
+                <i v-if="sort" class="fa fa-sort-amount-asc" aria-hidden="true"></i>
+                <i v-if="!sort" class="fa fa-sort-amount-desc" aria-hidden="true"></i>
+              </button>
+              </div>
+              <button
+                v-if="!isnew"
+                v-on:click="isnew=true"
+                class="btn btn-default btn-sm">
+                <i class="fa fa-plus-circle"></i> Add New Todo
+              </button>
+            </div>
             <div v-if="isnew"
               is="newtodo"
               class="new-todo"
+              v-on:cancel="isnew = !isnew"
               v-on:newtodo="todoCreated">
             </div>
-          </div>
-            {{message}}
             <todo
-               v-for="(todo, index) in todos"
-              :key="index"
+               v-for="todo in sortedTodo"
               :todo="todo"
-              v-on:updated="updateTodo(index, $event)"
-              v-on:deleted="removeTodo(index)"></todo>
+              :key="todo.id"
+              v-on:updated="updateTodo"
+              v-on:deleted="removeTodo"></todo>
           </div>
-
         </div>
       </div>
     </div>
