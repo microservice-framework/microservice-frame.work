@@ -116,6 +116,7 @@ $( function() {
       todos: [],
       isnew: false,
       sort: false,
+      online: false,
     },
     created: function(){
       var self = this;
@@ -125,10 +126,11 @@ $( function() {
       }
       self.apiClient = new MicroserviceClient(clientSettings);
       self.apiClient.search('todo', {}, function(err, handlerResponse, headers){
-        if(err) {
-          self.message = err;
+        if(handlerResponse == null) {
+          self.message = 'Failed to connect to API.';
           return;
         }
+        self.online = true;
         for (var todo of handlerResponse) {
           self.todos.push(todo);
         }

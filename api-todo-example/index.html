@@ -191,6 +191,7 @@ HERE is some HOW-TO launch up this example
         <div class="container">
           <div id="example-todo">
             <div>Status: {{message}}</div>
+            <div v-if="online">
             <div class="toolbar">
               <div class="pull-right">
               <button
@@ -208,18 +209,19 @@ HERE is some HOW-TO launch up this example
                 <i class="fa fa-plus-circle"></i> Add New Todo
               </button>
             </div>
-            <div v-if="isnew"
-              is="newtodo"
-              class="new-todo"
-              v-on:cancel="isnew = !isnew"
-              v-on:newtodo="todoCreated">
+              <div v-if="isnew"
+                is="newtodo"
+                class="new-todo"
+                v-on:cancel="isnew = !isnew"
+                v-on:newtodo="todoCreated">
+              </div>
+              <todo
+                 v-for="todo in sortedTodo"
+                :todo="todo"
+                :key="todo.id"
+                v-on:updated="updateTodo"
+                v-on:deleted="removeTodo"></todo>
             </div>
-            <todo
-               v-for="todo in sortedTodo"
-              :todo="todo"
-              :key="todo.id"
-              v-on:updated="updateTodo"
-              v-on:deleted="removeTodo"></todo>
           </div>
         </div>
       </div>
