@@ -126,7 +126,7 @@ $( function() {
       }
       self.apiClient = new MicroserviceClient(clientSettings);
       self.apiClient.search('todo', {}, function(err, handlerResponse, headers){
-        if(handlerResponse == null) {
+        if(err == null && handlerResponse == null) {
           self.message = 'Failed to connect to API.';
           return;
         }

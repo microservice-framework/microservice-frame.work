@@ -8,4 +8,4 @@ deploy:
       domain: 'microservice-frame.work'
     scripts:
       init: '{deploy_dir}/scripts/deploy_init.sh'
-      after: '{deploy_dir}/scripts/deploy_update.sh'
+      after: '{deploy_dir}/scripts/deploy_after.sh'
