@@ -127,6 +127,12 @@ $( function() {
       }
     },
     computed: {
+      apiExplorer: function() {
+        if(this.accessToken != '') {
+          return 'http://127.0.0.1:3100/?' + this.accessToken;
+        }
+        return false;
+      },
       sortedTodo: function(){
         var todos = [];
         for(var todo of this.todos){
