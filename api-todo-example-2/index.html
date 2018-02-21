@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="ru" version="XHTML+RDFa 1.0" dir="ltr">
+<head profile="http://www.w3.org/1999/xhtml/vocab">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1.0, user-scalable=no" />
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<link rel="shortcut icon" type="image/png" href="/images/hex.png"/>
+<title>Microservice Framework</title>
+<link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" media="all" />
+<link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" media="all" />
+<link type="text/css" rel="stylesheet" href="/css/style.css" media="all" />
+<link type="text/css" rel="stylesheet" href="app.css" media="all" />
+<script src="//code.jquery.com/jquery-3.2.1.slim.min.js"></script>
+<script type="text/javascript" src="//netdna.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
+<script src="../js/microservice-client.min.js"></script>
+<script src="//cdn.jsdelivr.net/npm/vue"></script>
+<script src="app.js"></script>
+<script type="text/x-template" id="todo-template">
+  <div class="todo">
+    <div class="action pull-right">
+      <button
+        v-on:click="isDelete=true"
+        class="btn btn-sm btn-link delete ">
+        <i class="fa fa-times"></i>
+      </button>
+      <button
+        v-on:click="isEdit=true"
+        class="btn btn-sm btn-link edit">
+        <i class="fa fa-pencil"></i>
+      </button> 
+    </div>
+    <div v-if="isDelete">
+      Are you sure want to delete it?
+      <button
+        v-on:click="deleteTodo()"
+        class="btn btn-sm btn-danger">Yes</button>
+      <button
+        v-on:click="isDelete=false"
+        class="btn btn-sm btn-default">No</button>          
+    </div>
+    <div v-if="!isEdit">
+      <div>
+        <span>{{todo.title}}</span>
+        <span class="tags">
+          <span v-for="tag in todo.tags" class="tag">{{tag}}</span>
+        </span>
+      </div>
+      <div>{{todo.body}}</div>
+      <div class="date"><i class="fa fa-calendar-o" aria-hidden="true"></i> {{date}}</div>
+    </div>
+    <div v-if="isEdit">
+      <div class="form-group">
+        <input name="name"  v-model="update.title" class="form-control form-input required" placeholder="Todo title">
+      </div>
+      <div class="form-group">
+        <textarea v-model="update.body" class="form-control"  placeholder="Todo body"></textarea>
+      </div>
+      <div>
+        <div class="tags">
+          <span class="tag" v-for="tag in update.tags">
+            {{tag}}
+            <a 
+              v-on:click.prevent="removeTag(tag)"
+              href="#" class="remove">
+              <i class="fa fa-times"></i>
+            </a>
+          </span>
+        </div>
+        <div class="input-group" style="width: 200px;">
+          <input v-model="newtag" class="form-control" placeholder="tag name">
+          <span class="input-group-btn">
+            <button
+              class="btn-default btn"
+              :disabled="newtag == ''"
+              v-on:click="addTag()">Add Tag</button>
+          </span>
+        </div>
+      </div>
+      <div class="form-actions">
+        <div 
+          v-if="isSubmit">
+          <i class="fa fa-refresh fa-spin fa-fw"></i> Submitting ... 
+        </div>
+        <button
+          class="btn-success btn submit"
+          v-if="!isSubmit"
+          :disabled="update.title == ''"
+          v-on:click="updateTodo()">Update</button>
+        <button
+          class="btn-warning btn"
+          v-on:click="cancelUpdate()">Cancel</button>
+      </div>
+    </div>
+  </div>
+</script>
+<script type="text/x-template" id="newtodo-template">
+  <div>
+    <h2>Creating new todo</h2>
+    <div class="form-group">
+      <input name="name"  v-model="todo.title" class="form-control form-input required" placeholder="Todo title">
+    </div>
+    <div class="form-group">
+      <textarea v-model="todo.body" class="form-control"  placeholder="Todo body"></textarea>
+    </div>
+    <div>
+      <div class="tags">
+        <span class="tag" v-for="tag in todo.tags">
+          {{tag}}
+          <a 
+            v-on:click.prevent="removeTag(tag)"
+            href="#" class="remove">
+            <i class="fa fa-times"></i>
+          </a>
+        </span>
+      </div>
+      <div class="input-group" style="width: 200px;">
+        <input v-model="newtag" class="form-control" placeholder="tag name">
+        <span class="input-group-btn">
+          <button
+            class="btn-default btn"
+            :disabled="newtag == ''"
+            v-on:click="addTag()">Add Tag</button>
+        </span>
+      </div>
+    </div>
+    <div class="form-actions">
+      <div 
+        v-if="isSubmit">
+        <i class="fa fa-refresh fa-spin fa-fw"></i> Submitting ... 
+      </div>
+      <button
+        class="btn-success btn submit"
+        v-if="!isSubmit"
+        :disabled="todo.title == ''"
+        v-on:click="createTodo()">Create</button>
+      <button
+        class="btn-default btn"
+        v-if="!isSubmit"
+        v-on:click="$emit('cancel')">Cancel</button>
+    </div>
+  </div>
+</script>
+</head>
+<body class="html front logged-in no-sidebars page-node navbar-is-fixed-top" >
+  <header id="navbar" role="banner" class="navbar navbar-fixed-top navbar-default">
+    <div class="container">
+      <div class="navbar-header">
+        <a class="logo navbar-btn pull-left" href="/" title="Main page">
+          <img src="../images/hex.png" alt="Main page" />
+        </a>
+        
+        <a class="name navbar-brand" href="../" title="Main page">Microservice Framework</a>
+        
+        <!-- .btn-navbar is used as the toggle for collapsed navbar content -->
+        <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+          <span class="sr-only">Toggle navigation</span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+        </button>
+      </div>
+  
+      <div class="navbar-collapse collapse">
+        <nav role="navigation">
+          <ul class="menu nav navbar-nav navbar-right">
+            <li class="first leaf"><a href="../#about" title="About">About</a></li>
+            <li class="leaf"><a href="https://github.com/microservice-framework" title="GitHub" target="_blank">GitHub</a></li>
+            <li class="leaf"><a href="https://www.npmjs.com/~microservice-framework" title="NpmJS" target="_blank">NpmJS</a></li>
+            <li class="leaf"><a href="https://gitter.im/microservice-framework/chat" title="Contact" target="_blank">Gitter</a></li>
+            
+          </ul>
+        </nav>
+      </div>
+    </div>
+  </header>
+
+  <div class="main-container container-fluid">
+    <div class="row">
+      <div id="about" class="col-xs-12">
+        <div class="container">
+          <div class="intro">
+            <h2># API TODO Example 2</h2>
+            <p>
+API example with user auth service.
+<h3> Make sure that you have local mongo installed and running without auth (testing purposes only).</h3>
+<h3> Install mfw-cli if not installed yet.</h3>
+<pre class="slide"><code>  # npm install @microservice-framework/mfw-cli -g
+</code></pre>
+
+<h3> Clone this repo</h3>
+<pre class="slide"><code>  # git clone https://github.com/microservice-framework/api-todo-example-2.git
+  Cloning into 'api-todo-example-2'...
+  remote: Counting objects: 11, done.
+  remote: Compressing objects: 100% (10/10), done.
+  remote: Total 11 (delta 1), reused 6 (delta 0), pack-reused 0
+  Unpacking objects: 100% (11/11), done.
+  # cd api-todo-example-2
+</code></pre>
+  Application folder is a bundle for all services.
+  
+<h3> Install all services that a part of this bundle</h3>
+<pre class="slide"><code>  # mfw setup
+	-	downloading microservice-router
+	-	downloading example-todo
+	-	downloading microservice-auth
+	-	downloading microservice-users
+	-	downloading microservice-users-login
+	-	copiyng microservice-users-login to /Volumes/DATA/gor/tmp/api-todo-example-2/services/microservice-users-login
+	-	copiyng microservice-users to /Volumes/DATA/gor/tmp/api-todo-example-2/services/microservice-users
+	-	copiyng example-todo to /Volumes/DATA/gor/tmp/api-todo-example-2/services/example-todo
+	-	updating dependencies for microservice-users-login
+	-	updating dependencies for example-todo
+	-	updating dependencies for microservice-users
+	-	copiyng microservice-router to /Volumes/DATA/gor/tmp/api-todo-example-2/services/microservice-router
+	-	updating dependencies for microservice-router
+	-	copiyng microservice-auth to /Volumes/DATA/gor/tmp/api-todo-example-2/services/microservice-auth
+	-	updating dependencies for microservice-auth
+	[ok]	/Volumes/DATA/gor/tmp/api-todo-example-2/services created.
+	[ok]	/Volumes/DATA/gor/tmp/api-todo-example-2/logs created.
+	[ok]	/Volumes/DATA/gor/tmp/api-todo-example-2/pids created.
+	[ok]	/Volumes/DATA/gor/tmp/api-todo-example-2/configs created.
+	[ok]	github:microservice-framework/microservice-users-login updated.
+	[ok]	@microservice-framework/microservice-auth updated.
+	[ok]	@microservice-framework/microservice-router updated.
+	[ok]	github:microservice-framework/example-todo updated.
+	[ok]	github:microservice-framework/microservice-users updated.
+	[war]	/Volumes/DATA/gor/tmp/api-todo-example-2 already exists.
+	[war]	.gitignore already exists
+</code></pre>
+<h3> start all service</h3>
+<pre class="slide"><code>  # mfw start all
+	-	starting example-todo:start
+	-	starting microservice-users:start
+	-	starting microservice-users-login:start
+	-	starting microservice-auth:start
+	-	starting microservice-router:start-proxy
+	-	starting microservice-router:start-admin
+	[ok]	example-todo:start started
+	[ok]	microservice-users:start started
+	[ok]	microservice-users-login:start started
+	[ok]	microservice-auth:start started
+	[ok]	microservice-router:start-proxy started
+	[ok]	microservice-router:start-admin started
+	[war]	failed to read .env file. Creating default one.
+</code></pre>
+<h3> wait 30 seconds until route will be cached.</h3>
+<h3> run script to add user to database.</h3>
+<pre class="slide"><code>  # NODE_PATH=services/microservice-users/node_modules node create-user.js
+ null
+  { login: 'user',
+    role: 'user',
+    hash:
+     { salt: 'SvEkKqzW5KQXiy15hN3faIFY0CsSRzNEcNOjPWZWPsrJYex067GoQg8GJmaWBdo/qzQCHvFL9jf2VJ3TLp8LFErF94isnDzP8jDCvFbI0WeNC3Hj2p5ExxjVURh8iEhaJX04DiHAUKOXd5dm40nISVbUGKJNAyJT5PTEPjM/lgo=',
+       iterations: 1000,
+       keylen: 512,
+       digest: 'sha512',
+       hash: '1b89e77893efaf69f10f92b2afa61f7fd95a2c8a7cbf582763b98434097d2662519a96d60703d44e5dfe252f771ca94c5402b6398e0db1268ae2f9da48fddb4d771855d57044255c3e80d3d556850f1c44e0a61819c26063dcd30d02fc3d5a1f721c34ff423f88439465d0b665e9f140b1f885bbe8909436f9c0cd9ad01546920e44f5a4f76904ca787f48ec731c6d0ba5a8ca063fd4de0dbe8d02e87743dc16c487729953573418f65c1b01c56aef1624d779bcd5b1cf31141f177ec27975028382058a77e7b9b43d562cb89959acc1bf06a1bef866a9262091248e3e6392f1035500328099b96c9872b8ff5f5c6cb184318c3d0cdedca19aeea813f9bf7f6070a53ad3aaf0468ac2a660cdace54c32dd37363b2c3d4c2f24a026ff9b0de8ec385e55b45b0fcc5772ce51cb3c3e0c02ce80db4bff50332704dec7c8d40add82168966aa693698998000093cb4da531c089fbed8c327832405ca87440abf9ae3ac98dadfc79526c5bbb3e5a41f27c629b2e9723370b61ceb1d3a14c913711c1ad761aff134a07fbb6629c9b0729351e568f522cdf28af9469c6d6b757a4d0607e8a16be55e139214cf65bbc661fefe984e14c06774470deaccc0ae0069c228bac00ceea4c2e0dafe84314234278a8ef2314052023c297c564aa75253d81c4ff94527a8611dc0a961e55dab29056426903e2406c87fefd9c85c74cd219d87023c' },
+    created: 1519186296452,
+    changed: 1519186296452,
+    token: 'b4c1f2b5b382c99c0956502d452f610de64be6bf0d8d2582',
+    url: 'http://localhost:3100/users/user' }
+</code></pre>  
+If output is similar to provided, login with credentials: Login: user, Password: user.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="row">
+      <div id="app-container" class="col-xs-12">
+        <div class="container">
+          <div id="example-todo">
+            <div class="status">Status: {{message}}
+              <span v-if="user.login != ''">User: {{user.login}}</span>
+              <span v-if="accessToken != ''">AccessToken: {{accessToken}}</span>
+            </div>
+            <div v-if="isLogin" class="col-xs-12 col-md-6 col-md-offset-3">
+              <div class="form-group">
+                <input name="name"  v-model="user.login" class="form-control form-input required" placeholder="Login">
+              </div>
+              <div class="form-group">
+                <input name="password" type="password"  v-model="user.pass" class="form-control form-input required" placeholder="Password">
+              </div>             
+
+              <div class="form-actions">
+                <div 
+                  v-if="isSubmit">
+                  <i class="fa fa-refresh fa-spin fa-fw"></i> Submitting ... 
+                </div>
+                <button
+                  class="btn-success btn submit"
+                  v-if="!isSubmit"
+                  :disabled="user.login == '' || user.pass == ''"
+                  v-on:click="loginUser()">Login</button>
+              </div>
+            </div>
+            <div v-if="online">
+            <div class="toolbar">
+              <div class="pull-right">
+              <button
+                v-on:click="sort = !sort"
+                class="btn btn-default btn-sm">
+                Sort: 
+                <i v-if="sort" class="fa fa-sort-amount-asc" aria-hidden="true"></i>
+                <i v-if="!sort" class="fa fa-sort-amount-desc" aria-hidden="true"></i>
+              </button>
+              </div>
+              <button
+                v-if="!isnew"
+                v-on:click="isnew=true"
+                class="btn btn-default btn-sm">
+                <i class="fa fa-plus-circle"></i> Add New Todo
+              </button>
+            </div>
+              <div v-if="isnew"
+                is="newtodo"
+                class="new-todo"
+                v-on:cancel="isnew = !isnew"
+                v-on:newtodo="todoCreated">
+              </div>
+              <todo
+                 v-for="todo in sortedTodo"
+                :todo="todo"
+                :key="todo.id"
+                v-on:updated="updateTodo"
+                v-on:deleted="removeTodo"></todo>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <footer class="footer container-fluid">
+    <div class="region region-footer">
+      <div class="content">
+        <ul>
+          <li> Microservice Framework is released under <a href="http://creativecommons.org/licenses/GPL/3.0/" target="_blank" >GNU General Public License, version 3.</a></li>
+        </ul>
+        <div class="logo">
+          <img src="/images/hex-white.png" />
+        </div>
+      </div>
+    </div>
+  </footer>
+</body>
+</html>
+
