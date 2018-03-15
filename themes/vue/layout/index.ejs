@@ -1,0 +1,51 @@
+<div class="sidebar">
+  <div class="sidebar-inner-index">
+    <ul class="main-menu">
+      <%- partial('partials/main_menu', { context: 'sidebar' }) %>
+    </ul>
+  </div>
+</div>
+
+<div id="hero">
+  <div class="inner">
+    <div class="left">
+      <img class="hero-logo" src="<%- url_for("/images/hex.png") %>">
+    </div><div class="right">
+      <h2 class="vue">Microservice Framework</h2>
+      <h1>
+        Microservice<br>Framework (mFW)
+      </h1>
+      <p>
+        <a class="button white" href="<%- url_for("/guide/") %>">Documentation</a>
+        <a class="button gray has-icon" href="https://github.com/microservice-framework/community" target="_blank">
+          <%- partial('icons/github-dark') %>
+          GITHUB</a>
+      </p>
+    </div>
+  </div>
+</div>
+
+<div id="highlights">
+  <div class="inner">
+    <div class="point">
+      <h2>Rapid Scale</h2>
+      <p>One microservice, one endpoint. Scale horizontally to meet any demand.</p>
+    </div>
+
+    <div class="point">
+      <h2>CRUDS</h2>
+      <p>CREATE, READ, UPDATE, DELETE... And now, SEARCH!</p>
+    </div>
+
+    <div class="point">
+      <h2>Tidy Architecture</h2>
+      <p>Each mFW instance represents one database table or one datatype. Stay organized.</p>
+    </div>
+  </div>
+</div>
+
+<div id="footer">
+  <p>The Microservice framework is released under <a href="https://opensource.org/licenses/GPL-3.0" target="_blank">GPL 3.0</a>. Theme forked from <a href="https://vuejs.org">vuejs.org</a>. <br>
+          <img style = "height: 33px; padding: 15px" src="/images/hex-white.png" /></p>
+</div>
+
