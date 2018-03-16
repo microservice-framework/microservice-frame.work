@@ -1,7 +1,7 @@
 #!/bin/sh
 
-# Go to domain directory.
-cd $DOCROOT
+cd $ZENCI_DEPLOY_DIR
 
-echo "Linking modules from $ZENCI_DEPLOY_DIR"
-ln -s $ZENCI_DEPLOY_DIR/* ./
+echo "init project"
+
+npm install

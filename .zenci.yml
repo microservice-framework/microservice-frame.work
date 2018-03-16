@@ -4,8 +4,29 @@ deploy:
     username: mfw
     dir: '{home}/github/{repo_owner}/{repo_name}/{branch}'
     env_vars:
+      docroot: '{home}/domains/qa.microservice-frame.work/branch/{branch}'
+      domain: 'qa.microservice-frame.work'
+      rootdir: '/branch/{branch}/'
+    scripts:
+      init: '{deploy_dir}/scripts/deploy_init.sh'
+      after: '{deploy_dir}/scripts/deploy_after.sh'
+  master:
+    server: microservice-frame.work
+    username: mfw
+    dir: '{home}/github/{repo_owner}/{repo_name}/{branch}'
+    env_vars:
       docroot: '{home}/domains/microservice-frame.work'
       domain: 'microservice-frame.work'
+    scripts:
+      init: '{deploy_dir}/scripts/deploy_init_old.sh'
+  pull_request:
+    server: microservice-frame.work
+    username: mfw
+    dir: '{home}/github/{repo_owner}/{repo_name}/pr/{pr_number}'
+    env_vars:
+      docroot: '{home}/domains/qa.microservice-frame.work/pr/{pr_number}'
+      domain: 'qa.microservice-frame.work'
+      rootdir: '/pr/{pr_number}/'
     scripts:
       init: '{deploy_dir}/scripts/deploy_init.sh'
       after: '{deploy_dir}/scripts/deploy_after.sh'
