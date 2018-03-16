@@ -1,0 +1,11 @@
+deploy:
+  branch:
+    server: microservice-frame.work
+    username: mfw
+    dir: '{home}/github/{repo_owner}/{repo_name}/{branch}'
+    env_vars:
+      docroot: '{home}/domains/microservice-frame.work'
+      domain: 'microservice-frame.work'
+    scripts:
+      init: '{deploy_dir}/scripts/deploy_init.sh'
+      after: '{deploy_dir}/scripts/deploy_after.sh'
