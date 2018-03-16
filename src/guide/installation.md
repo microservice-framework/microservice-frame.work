@@ -1,24 +1,5 @@
 ---
-title: Microservice Framework
+title:
 type: guide
-order: 1
+order: 2
 ---
-
-## Foreword 
-
-Lala
-
-### Framework Doc Start
-
-Lalalal!
-
-
-```javascript
-// I am CODE!
-var cheese;
-var pickles;
-
-var snoop = cheese + pickles;
-
-console.log(snoop);
-```
