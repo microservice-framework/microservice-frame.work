@@ -4,7 +4,7 @@ deploy:
     username: mfw
     dir: '{home}/github/{repo_owner}/{repo_name}/{branch}'
     env_vars:
-      docroot: '{home}/domains/qa.microservice-frame.work/{branch}'
+      docroot: '{home}/domains/qa.microservice-frame.work/branch/{branch}'
       domain: 'qa.microservice-frame.work'
       rootdir: '/branch/{branch}/'
     scripts:
