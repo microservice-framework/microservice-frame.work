@@ -8,8 +8,8 @@ deploy:
       domain: 'qa.microservice-frame.work'
       rootdir: '/branch/{branch}/'
     scripts:
-      init: '{deploy_dir}/scripts/deploy_init.sh'
-      after: '{deploy_dir}/scripts/deploy_after.sh'
+      init: '{deploy_dir}/deploy_scripts/deploy_init.sh'
+      after: '{deploy_dir}/deploy_scripts/deploy_after.sh'
   master:
     server: microservice-frame.work
     username: mfw
@@ -28,5 +28,5 @@ deploy:
       domain: 'qa.microservice-frame.work'
       rootdir: '/pr/{pr_number}/'
     scripts:
-      init: '{deploy_dir}/scripts/deploy_init.sh'
-      after: '{deploy_dir}/scripts/deploy_after.sh'
+      init: '{deploy_dir}/deploy_scripts/deploy_init.sh'
+      after: '{deploy_dir}/deploy_scripts/deploy_after.sh'

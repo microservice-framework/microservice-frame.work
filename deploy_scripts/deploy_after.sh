@@ -19,5 +19,5 @@ echo "Replacing public_dir: $DOCROOT"
 sed -i 's|public_dir:.*$|public_dir: '$DOCROOT'|g' _config.yml
 
 
-node ./node_modules/.bin/hexo clean --safe
-node ./node_modules/.bin/hexo generate --safe
+node ./node_modules/.bin/hexo clean
+node ./node_modules/.bin/hexo generate
