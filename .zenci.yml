@@ -24,7 +24,7 @@ deploy:
     username: mfw
     dir: '{home}/github/{repo_owner}/{repo_name}/pr/{pr_number}'
     env_vars:
-      docroot: '{home}/domains/qa.microservice-frame.work/{pr_number}'
+      docroot: '{home}/domains/qa.microservice-frame.work/pr/{pr_number}'
       domain: 'qa.microservice-frame.work'
       rootdir: '/pr/{pr_number}/'
     scripts:
