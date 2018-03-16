@@ -13,10 +13,10 @@ if [ "$ROOTDIR" != "" ];then
 fi
 
 echo "Replacing URL: $DOMAIN"
-sed -i 's|url:.*$ |url: https://'$DOMAIN'|g' _config.yml
+sed -i 's|url:.*$|url: https://'$DOMAIN'|g' _config.yml
 
 echo "Replacing public_dir: $DOCROOT"
-sed -i 's|public_dir:.*$ |public_dir: '$DOCROOT'|g' _config.yml
+sed -i 's|public_dir:.*$|public_dir: '$DOCROOT'|g' _config.yml
 
 
 node ./node_modules/.bin/hexo clean
