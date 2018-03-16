@@ -1,0 +1,12 @@
+<div id="header">
+  <a id="logo" href="<%- url_for("/") %>">
+    <img src="<%- url_for("/images/hex.png") %>">
+    <span>mFW</span>
+  </a>
+  <ul id="nav">
+    <li><a href="<%- url_for("/guide/") %>" class="nav-link<%- page.path.match(/\/guide(\/|$)/) ? ' current' : '' %>">Documentation</a></li>
+    <li><a href="https://www.npmjs.com/~microservice-framework" class="nav-link<%- page.path.match(/\/guide(\/|$)/) ? ' current' : '' %>">NpmJS</a></li>
+    <li> <a href="https://gitter.im/microservice-framework/chat" class="nav-link<%- page.path.match(/\/guide(\/|$)/) ? ' current' : '' %>">Chat on Gitter</a></li>
+    <%- partial('partials/support_vue_dropdown') %>
+  </ul>
+</div>

@@ -1,0 +1,61 @@
+site_description: "The Spirits of Code: Holistic Education on the Art of Code"
+google_analytics: 
+root_domain: codingspirits.ca
+vue_version: 2.5.13
+
+special_sponsors:
+  - url: https://stdlib.com
+    img: 
+  - url: https://www.bitsrc.io/?utm_source=vue&utm_medium=vue&utm_campaign=vue&utm_term=vue&utm_content=vue
+    img: 
+    wide_img: 
+    big_width: 120px
+    big_height: 120px
+
+platinum_sponsors:
+  - url: http://tooltwist.com/
+    img: 
+  - url: https://vueschool.io/?utm_source=Vuejs.org&utm_medium=Banner&utm_campaign=Sponsored%20Banner&utm_content=V1
+    img: 
+  - url: https://www.datacamp.com/careers?utm_source=vuejs&utm_medium=sidebar
+    img: 
+
+gold_sponsors:
+  - url: https://laravel.com
+    img: 
+  - url: https://htmlburger.com
+    img: 
+  - url: https://chaitin.cn/en/
+    img: 
+  - url: https://anymod.com
+    img: 
+  - url: https://www.frontenddeveloperlove.com/
+    img: 
+  - url: https://onsen.io/vue/
+    img: 
+  - url: https://vuetifyjs.com
+    img: 
+  - url: https://neds.com.au/
+    img: 
+  - url: https://hackr.io/tutorials/learn-vue-js
+    img: 
+  - url: https://icons8.com/
+    img: 
+  - url: https://vuejobs.com/?ref=vuejs
+    img: 
+  - url: https://leanpub.com/vuejs2
+    img: 
+  - url: https://www.bmqb.com/jobs
+    img: 
+  - url: https://codepilot.ai
+    img: 
+
+bronze_sponsors:
+  - url: http://tighten.co/
+    img: 
+  - url: https://alligator.io
+    img: 
+  - url: https://www.accelebrate.com/
+    img: 
+  - url: https://pullstring.com
+    img: 
